@@ -20,8 +20,10 @@ new OrbitControls(camera, renderer.domElement);
 const detail = 12;
 const loader = new THREE.TextureLoader();
 const geometry = new THREE.IcosahedronGeometry(1, detail);
+const geometryCloud = new THREE.SphereGeometry(1.01, detail**2);
+const geometryAtmos = new THREE.SphereGeometry(1.03, detail**2);
 const material = new THREE.MeshPhongMaterial({
-    map: loader.load("./textures/earthmap1k.jpg"),
+    map: loader.load("./textures/8k_earth_daymap.jpg"),
     specularMap: loader.load("./textures/earthspec1k.jpg"),
     bumpMap: loader.load("./textures/earthbump1k.jpg"),
     bumpScale: 0.04,
@@ -31,19 +33,35 @@ const earthMesh = new THREE.Mesh(geometry, material);
 earthGroup.add(earthMesh);
 
 const lightsMat = new THREE.MeshBasicMaterial({
-    map: loader.load("./textures/earthlights1k.jpg"),
+    map: loader.load("./textures/8k_earth_nightmap.jpg"),
     blending: THREE.AdditiveBlending,
 });
 const lightsMesh = new THREE.Mesh(geometry, lightsMat);
 earthGroup.add(lightsMesh);
+
+const cloudMat = new THREE.MeshStandardMaterial({
+    map: loader.load("./textures/8k_earth_clouds.jpg"),
+    blending: THREE.AdditiveBlending
+})
+const cloudMesh = new THREE.Mesh(geometryCloud, cloudMat)
+earthGroup.add(cloudMesh)
+
+const atmosMat = new THREE.MeshBasicMaterial({
+    color: 0x93cfef,
+    transparent: true,
+    opacity: 0.1
+});
+const atmosMesh = new THREE.Mesh(geometryAtmos, atmosMat)
+earthGroup.add(atmosMesh)
 
 const sunLight = new THREE.DirectionalLight(0xffffff, 2.0);
 sunLight.position.set(-2, 0.5, 1.5);
 scene.add(sunLight);
 
 function rotate(){
-    earthMesh.rotation.y += 0.002;
-    lightsMesh.rotation.y += 0.002;
+    earthMesh.rotation.y += 0.0005;
+    lightsMesh.rotation.y += 0.0005;
+    cloudMesh.rotation.y += 0.0003;
 }
 
 function animate() {
