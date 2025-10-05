@@ -1,0 +1,137 @@
+import Navbar from "../components/navbar";
+import { Meteors } from '../components/animations/meteors';
+import  meteorite  from '../assets/meteorite.png';
+import meteorImpact from '../assets/meteor-impact.jpeg';
+import orbitSim from '../assets/orbit-simulation.jpeg';
+
+function Home() {
+
+  const teamMembers = [
+  { name: "Andres Garcia", avatar: "👨‍🚀" },
+  { name: "Angel Zahid", avatar: "👩‍💻" },
+  { name: "Fernando Gonzalez", avatar: "👨‍🔬" },
+  { name: "Angel Alejandro", avatar: "👩‍🚀" },
+  { name: "Itzel Ximena", avatar: "👩‍🚀" },
+  { name: "Alvaro Nuñez", avatar: "👩‍🚀" },
+];
+
+
+  return (
+    <div className='min-h-screen flex flex-col'>
+      <Navbar/>
+
+
+      <div className="bg-black flex-1 relative overflow-hidden">
+        <div className="relative flex h-full w-full flex-col items-center justify-center rounded-lg">
+          <Meteors number={60} className='overflow-hidden'/>
+           <div className="relative z-10 flex h-full gap-20 items-center">
+          {/* Left Column */}
+            <div className="flex-1 flex-col items-center justify-center self-baseline ml-14 mt-14 pl-14 mb-6">
+              <span className="pointer-events-none bg-gradient-to-b from-white to-indigo-800 bg-clip-text text-center text-9xl leading-none font-bebas whitespace-pre-wrap text-transparent">
+                METEOR
+                <br />
+                MADNESS
+              </span>
+                <p className="text-4xl font-bebas text-gray-300"> Interactive 3D simulator that models<br/> 
+                  <span className=" text-5xl font-black underline "> asteroid trajectories and impact scenarios</span>&nbsp;  
+                   using real NASA data. Visualize consequences and explore mitigation strategies.
+                </p>
+            </div>
+            
+            {/* Right Column */}
+
+            <div className="flex-1 flex items-center justify-center">
+              <img 
+                src={meteorite} 
+                alt="Meteor animation" 
+                className="w-1/2 object-contain rounded-lg justify-center align-center items-center content-center"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10 flex items-center justify-center px-8 pb-12">
+          <div className="rounded-3xl border-2 border-transparent bg-gradient-to-br from-white to-indigo-600 p-1 max-w-5xl">
+            <div className="bg-black rounded-2xl p-8">
+              <h2 className="text-4xl font-bebas text-center mb-8 bg-gradient-to-b from-white to-indigo-600 bg-clip-text text-transparent">
+                THE TEAM
+              </h2>
+              
+              {/* Grid 2x4 */}
+              <div className="grid grid-cols-2 gap-12">
+
+                 {teamMembers.map((member, idx) => (
+                      <div
+                        key={idx}
+                        className="flex flex-row items-center text-center gap-4"
+                      >
+                        {/* Avatar */}
+                        <div className="text-4xl bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full w-12 h-12 flex items-center justify-center">
+                          {member.avatar}
+                        </div>
+                        
+                        {/* Name */}
+                        <h3 className="text-white font-semibold text-2xl">
+                          {member.name}
+                        </h3>
+                      </div>
+                    ))}
+                  <div/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 flex flex-row w-full h-[24rem] gap-6 px-20">
+          {/* Watch Meteorites Card */}
+          <div className="relative border-4 border-indigo-500 h-full w-full rounded-3xl overflow-hidden group hover:scale-[1.02] transition duration-300 cursor-pointer">
+            {/* Imagen de fondo */}
+            <img 
+              src={meteorImpact} 
+              alt="Meteor background" 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            
+            {/* Overlay oscuro */}
+            <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-300"></div>
+            
+            {/* Texto en bottom-right */}
+            <div className="absolute bottom-6 right-6 text-right z-10">
+              <span className="pointer-events-none bg-gradient-to-b from-white to-stone-400 bg-clip-text text-7xl leading-none font-bebas whitespace-pre-wrap text-transparent drop-shadow-lg">
+                SIMULATE
+                <br />
+                IMPACT
+              </span>
+            </div>
+          </div>
+
+          {/* Simulate Impact Card */}
+          <div className="relative border-4 border-purple-600 h-full w-full rounded-3xl overflow-hidden group hover:scale-[1.02] transition duration-300 cursor-pointer">
+            {/* Imagen de fondo */}
+            <img 
+              src={orbitSim} 
+              alt="Impact background" 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            
+            {/* Overlay oscuro */}
+            <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-300"></div>
+            
+            {/* Texto en bottom-right */}
+            <div className="absolute bottom-6 right-6 text-right z-10">
+              <span className="pointer-events-none bg-gradient-to-b from-white to-stone-400 bg-clip-text text-7xl leading-none font-bebas whitespace-pre-wrap text-transparent drop-shadow-lg">
+                WATCH
+                <br />
+                METEORITES
+              </span>
+            </div>
+          </div>
+        </div>
+
+
+      </div>  
+    </div>
+  );
+}
+
+export default Home;

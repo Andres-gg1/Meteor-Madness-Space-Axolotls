@@ -1,17 +1,17 @@
-import Navbar from "./components/navbar";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/home';
+import WatchMeteorites from './pages/orbit-sim';
+import SimulateImpact from './pages/impact-sim';
 
 function App() {
-
-  
-
   return (
-    <div className='h-screen flex flex-col'>
-      <Navbar/>
-      <div className="bg-black flex-1">
-        
-      </div>
-    </div>
-    
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/watch" element={<WatchMeteorites />} />
+        <Route path="/simulate" element={<SimulateImpact />} />
+      </Routes>
+    </Router>
   );
 }
 
