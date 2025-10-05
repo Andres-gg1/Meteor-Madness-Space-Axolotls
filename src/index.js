@@ -1,18 +1,21 @@
 import * as THREE from "three"; //import three.js library
 import { OrbitControls } from 'jsm/controls/OrbitControls.js';
 
-//Window size
-const w = window.innerWidth;
-const h = window.innerHeight;
+// Use a fixed container so the scene can be smaller in the page
+const container = document.getElementById('three-container') || document.body;
+const w = container.clientWidth || window.innerWidth;
+const h = container.clientHeight || window.innerHeight;
 
 // Scene setup
 let rotation = true; //Rotation control flag
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
-camera.position.z = 5;
+camera.position.z = 3;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio || 1);
 renderer.setSize(w, h);
-document.body.appendChild(renderer.domElement);
+// append canvas to the container (if found) so it appears smaller
+container.appendChild(renderer.domElement);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
@@ -89,8 +92,9 @@ const mouse = new THREE.Vector2();
 
 //Mouse click interaction to focus on Earth's clicked point
 function onMouseClick(event) {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+    const rel = getRelativeMouse(event);
+    mouse.x = rel.x;
+    mouse.y = rel.y;
 
     raycaster.setFromCamera(mouse, camera);
     rotation = false; // Stop rotation on click
@@ -117,7 +121,7 @@ function onMouseClick(event) {
 
         // Smooth camera transition to new position and lookAt
         const startPos = camera.position.clone();
-        const endPos = newPoint.clone().multiplyScalar(2.2).divideScalar(1.5);
+        const endPos = newPoint.clone().multiplyScalar(2.2).divideScalar(1.7);
         const startLook = camera.getWorldDirection(new THREE.Vector3()).clone();
         const endLook = intersect.point.clone();
         let progress = 0;
@@ -137,15 +141,96 @@ function onMouseClick(event) {
             }
         }
         animateCamera();
+        updateMeteor(100000, 25, 0, 0, 3000, 0.5, intersect); 
     }
 }
-window.addEventListener('click', onMouseClick, false);
+// Mouse events should be relative to the container
+function getRelativeMouse(event) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    return {
+        x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        y: -((event.clientY - rect.top) / rect.height) * 2 + 1
+    };
+}
+
+window.addEventListener('click', (e) => onMouseClick(e), false);
+
+////////////////////////////////////////////////////////////////
+// Meteor
+//////////////////////////////////////////////////////////////////
+const geometryMeteor = new THREE.IcosahedronGeometry(0.02, 8, 8);
+const materialMeteor = new THREE.MeshStandardMaterial({
+    map: loader.load("./textures/meteor_texture.jpg")
+    , emissive: 0xffffff,
+    emissiveIntensity: 0.15
+});
+let meteorMesh = new THREE.Mesh(geometryMeteor, materialMeteor);
 
 
+// Set meteor position in the scene
+meteorMesh.position.set(1.5, 0.5, -1.2);
+
+scene.add(meteorMesh);
+
+function updateMeteor(mass, velocity, yaw, pitch, density, volume, intersect) {
+    // Remove old meteor if any
+    if (meteorMesh) scene.remove(meteorMesh);
+
+    // Create meteor mesh
+    const geometryMeteor = new THREE.IcosahedronGeometry(0.05, 2);
+    const materialMeteor = new THREE.MeshStandardMaterial({
+        color: 0xff6600,
+        emissive: 0x330000,
+        emissiveIntensity: 0.5
+    });
+    const newMeteor = new THREE.Mesh(geometryMeteor, materialMeteor);
+
+    // Position meteor 4 Earth radii away
+    const startDistance = 4.0;
+    newMeteor.position.copy(intersect.point.clone().normalize().multiplyScalar(startDistance));
+
+    // Add to scene and assign to global reference
+    scene.add(newMeteor);
+}
+
+
+
+let resetButton = document.getElementById('resetButton');
+resetButton.addEventListener('click', () => {
+    scene.remove(meteorMesh);
+    console.log("Resetting meteor position and rotation.");
+    // Smoothly transition camera back to default position and lookAt
+    const startPos = camera.position.clone();
+    const endPos = new THREE.Vector3(0, 0, 3);
+    const startLook = camera.getWorldDirection(new THREE.Vector3()).clone();
+    const endLook = new THREE.Vector3(0, 0, 0);
+    let progress = 0;
+    const duration = 60;
+
+    function animateCameraReset() {
+        progress++;
+        const t = Math.min(progress / duration, 1);
+
+        camera.position.lerpVectors(startPos, endPos, t);
+        camera.lookAt(
+            startLook.clone().lerp(endLook, t)
+        );
+
+        if (t < 1) {
+            requestAnimationFrame(animateCameraReset);
+        } else {
+            rotation = true;
+        }
+    }
+
+    animateCameraReset();
+});
 
 function handleWindowResize () {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const newW = container.clientWidth || window.innerWidth;
+    const newH = container.clientHeight || window.innerHeight;
+    camera.aspect = newW / newH;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(newW, newH);
 }
 window.addEventListener('resize', handleWindowResize, false);
