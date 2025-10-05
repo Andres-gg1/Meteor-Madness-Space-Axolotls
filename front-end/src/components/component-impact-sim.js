@@ -52,9 +52,9 @@ function MeteorSimulation() {
 
     // Earth's model mesh
     const material = new THREE.MeshPhongMaterial({
-      map: loader.load("./three-textures/8k_earth_daymap.jpg"),
-      specularMap: loader.load("./three-textures/earthspec1k.jpg"),
-      bumpMap: loader.load("./three-textures/earthbump1k.jpg"),
+      map: loader.load("/three-textures/8k_earth_daymap.jpg"),
+      specularMap: loader.load("/three-textures/earthspec1k.jpg"),
+      bumpMap: loader.load("/three-textures/earthbump1k.jpg"),
       bumpScale: 0.04,
     });
     const earthMesh = new THREE.Mesh(geometry, material);
@@ -62,7 +62,7 @@ function MeteorSimulation() {
 
     // Lights mesh
     const lightsMat = new THREE.MeshBasicMaterial({
-      map: loader.load("./three-textures/8k_earth_nightmap.jpg"),
+      map: loader.load("/three-textures/8k_earth_nightmap.jpg"),
       blending: THREE.AdditiveBlending,
     });
     const lightsMesh = new THREE.Mesh(geometry, lightsMat);
@@ -70,7 +70,7 @@ function MeteorSimulation() {
 
     // Clouds mesh
     const cloudMat = new THREE.MeshStandardMaterial({
-      map: loader.load("./three-textures/8k_earth_clouds.jpg"),
+      map: loader.load("/three-textures/8k_earth_clouds.jpg"),
       blending: THREE.AdditiveBlending
     });
     const cloudMesh = new THREE.Mesh(geometryCloud, cloudMat);
@@ -179,7 +179,7 @@ function MeteorSimulation() {
 
       const geometryMeteor = new THREE.IcosahedronGeometry(0.02, 3);
       const materialMeteor = new THREE.MeshStandardMaterial({
-        map: loader.load("./three-textures/meteor_texture.jpg"),
+        map: loader.load("/three-textures/meteor_texture.jpg"),
         emissive: 0xffffff,
         emissiveIntensity: 0.15
       });
