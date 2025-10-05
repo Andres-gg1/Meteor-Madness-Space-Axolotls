@@ -8,6 +8,14 @@
     body {
         margin: 0;
     }
+    /* container for the Three.js canvas so the scene appears smaller */
+    #three-container {
+        width: 70%;
+        height: 100%;
+        margin: 0;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+        background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+    }
     </style>
     <script type="importmap">
         {
@@ -18,7 +26,15 @@
         }
 	</script>
 </head>
-<body>
+<body style="background-color: black;">
+    <div style="height: 100vh; margin:0; text-align: center; align-items: center; justify-content: center; display: flex; flex-direction: column; color:white; font-family: Arial, sans-serif;">
+        <div style="display: flex; flex-direction: row; justify-content: left; align-items: flex-end; height: 100%; width: 100%;">
+            <div id="three-container"></div>
+            <div style="display: flex; flex-direction:column ; align-items: center; margin-right: 20px;">
+                <button id="resetButton">Reset</button>
+            </div>
+        </div>
+    </div>
     <script type="module" src="index.js"></script>
 </body>
 </html>
