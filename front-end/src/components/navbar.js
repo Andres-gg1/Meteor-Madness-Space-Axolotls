@@ -12,7 +12,7 @@ function Navbar() {
 
 
     return (
-      <div className='bg-indigo-800 h-20 flex flex-row justify-between items-center px-4'>
+      <div className='bg-violet-800 h-20 flex flex-row justify-between items-center px-4'>
         {/* top bar */}
         <div className='flex flex-row items-center gap-4'>
           <Link to='/'>

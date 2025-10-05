@@ -149,6 +149,14 @@ def nearby_cities(lat, lon, radius_km=None):
     """Find nearby large cities within specified radius."""
     validate_coordinates(lat, lon)
     
+    current_dir = os.path.dirname(__file__)
+
+    # Ruta a la carpeta padre
+    parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
+
+    # Ruta completa al archivo cities_filtered.csv
+    CITIES_FILE = os.path.join(parent_dir, "cities_filtered.csv")
+
     if not os.path.exists(CITIES_FILE):
         raise FileNotFoundError(f"Cities file '{CITIES_FILE}' not found")
     
@@ -270,7 +278,7 @@ def get_density(lat, lon, radius_km=5, debug=False):
 # --- Examples ---
 if __name__ == '__main__':
     
-    (lat, lon) = (20.783216151505812, -103.24966816313234)
+    (lat, lon) = (20.677561150261983, -103.4128081509739)
     print(f"Coordinates: ({lat:.4f}, {lon:.4f})")
     try:
         density = get_density(lat, lon)
