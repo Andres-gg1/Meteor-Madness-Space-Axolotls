@@ -1,6 +1,6 @@
 import Navbar from "../components/navbar";
 import { Meteors } from '../components/animations/meteors';
-import  meteorite  from '../assets/meteorite.png';
+import  meteorite  from '../assets/meteorite-2.png';
 import meteorImpact from '../assets/meteor-impact.jpeg';
 import orbitSim from '../assets/orbit-simulation.jpeg';
 import { Link } from 'react-router-dom';
@@ -41,8 +41,8 @@ function Home() {
             <div className="flex-1 flex items-center justify-center">
               <img 
                 src={meteorite} 
-                alt="Meteor animation" 
-                className="w-1/2 object-contain rounded-lg justify-center align-center items-center content-center"
+                alt="Meteor image" 
+                className="w-auto -rotate-19 object-contain rounded-lg justify-center align-center items-center content-center pr-[5rem] mr-[5rem]"
               />
             </div>
           </div>

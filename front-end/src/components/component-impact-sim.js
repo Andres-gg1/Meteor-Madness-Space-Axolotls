@@ -18,7 +18,7 @@ export default function MeteorSimulation() {
     const container = containerRef.current || document.body;
     const w = container.clientWidth || window.innerWidth;
     const h = container.clientHeight || window.innerHeight;
-    const gravity = 9.81 / 6371;
+    const gravity = 2.1 / 6371;
 
     // scene / camera / renderer
     const scene = new THREE.Scene();
@@ -309,15 +309,40 @@ export default function MeteorSimulation() {
           velocityVector.add(dirToEarth.multiplyScalar(gravity * 0.02));
         }
         if (dist < 1.20 && dist > 0.1) {
+          // Fade in burn as meteor approaches
           burn.material.opacity = THREE.MathUtils.mapLinear(dist, 1.15, 1.02, 0.0, 1.0);
-          if (dist > 1.1) {
-            velocityVector.multiplyScalar(0.9825);
+
+          // Slow down meteor proportionally, but never stop until dist <= 1
+          // Use a minimum velocity threshold to prevent stopping
+          const minVelocity = 0.00005;
+          const currentSpeed = velocityVector.length();
+
+          if (dist > 1.05) {
+            // Gradually slow down, but keep above minVelocity
+            const slowFactor = 0.985;
+            velocityVector.multiplyScalar(slowFactor);
+            if (velocityVector.length() < 0.0005) {
+              velocityVector.setLength(0.0005);
+            }
+            else if (velocityVector.length() > 0.0010) {
+              velocityVector.setLength(0.0010);
+            }
             meteorMesh.material.emissiveIntensity = 6.0;
           } else if (dist > 1.04) {
-            velocityVector.multiplyScalar(0.98);
-            meteorMesh.material.emissiveIntensity = 8.0;
+            // Slow down more, but keep above minVelocity
+            const slowFactor = 0.97;
+            velocityVector.multiplyScalar(slowFactor);
+            if (velocityVector.length() < 0.0001) {
+              velocityVector.setLength(0.0001);
+            }
+            else if (velocityVector.length() > 0.0005) {
+              velocityVector.setLength(0.0005);
+            }
           } else if (dist > 1.02) {
-            velocityVector.multiplyScalar(0.974);
+            // Final approach, keep minimum speed
+            if (velocityVector.length() < minVelocity) {
+              velocityVector.setLength(minVelocity);
+            }
           }
         } else {
           burn.material.opacity = 0;
@@ -403,7 +428,7 @@ export default function MeteorSimulation() {
 
         createMeteor(
           intersect.point,
-          0.4,
+          parseFloat(document.getElementById("distValue").innerText),
           {
             velocity: parseFloat(document.getElementById("velValue").innerText) * 0.000001,
             diameter: parseFloat(document.getElementById("diameterValue").innerText),
@@ -558,7 +583,7 @@ export default function MeteorSimulation() {
         className="flex-1"
         style={{
           background:
-            "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.02), rgba(0,0,0,0.02))",
+          "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.02), rgba(0,0,0,0.02))",
         }}
       ></div>
 
@@ -566,11 +591,13 @@ export default function MeteorSimulation() {
       <div className="w-80 flex flex-col bg-gray-800 text-white p-4 m-4 gap-4 rounded-xl shadow-2xl">
         {/* Top: Sliders and Advanced Parameters */}
         <div className="flex flex-col gap-4 overflow-auto">
-          <h2 className="text-xl font-semibold text-center">Meteor Controls</h2>
+          <div className="flex justify-center mb-2 rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 p-2">
+            <h2>Click anywhere in the Earth to launch a meteor with the specified parameters!</h2>
+          </div>
 
           {/* Basic Sliders */}
                 <div className="flex flex-col gap-4">
-                {/* <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-0.5">
                   <label>
                 Initial Distance: <span id="distValue">0.4</span> ua
               </label>
@@ -582,9 +609,9 @@ export default function MeteorSimulation() {
                 defaultValue="0.4"
                 onChange={(e) => (document.getElementById("distValue").innerText = e.target.value)}
               />
-            </div> */}
+            </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               <label>
                 Zoom: <span id="zoomValue">50</span> %
               </label>
@@ -598,7 +625,7 @@ export default function MeteorSimulation() {
               />
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               <label>
                 Diameter: <span id="diameterValue">1000</span> m
               </label>
@@ -612,7 +639,7 @@ export default function MeteorSimulation() {
               />
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               <label>
                 Initial Velocity: <span id="velValue">0.0007</span>
               </label>
@@ -628,9 +655,9 @@ export default function MeteorSimulation() {
           </div>
 
           {/* Advanced Parameters */}
-          <details className="bg-gray-700 p-2 rounded-md">
+          <details className="bg-gray-700 p-1 rounded-md">
             <summary className="cursor-pointer font-semibold">Advanced Parameters</summary>
-            <div className="flex flex-col gap-4 mt-2">
+            <div className="flex flex-col gap-1 mt-2">
 
               <div className="flex flex-col gap-1">
                 <label>
@@ -652,7 +679,7 @@ export default function MeteorSimulation() {
         {/* Bottom: Simulation Info / Results */}
         <div
           id="simulationResults"
-          className="flex-1 p-4 mt-4 bg-gray-700 rounded-lg overflow-auto text-sm"
+          className="flex-1 p-4 mt-1 bg-gray-700 rounded-lg overflow-auto text-sm"
         >
           <p className="text-center text-gray-400">Simulation info will appear here</p>
         </div>
