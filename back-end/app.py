@@ -1,9 +1,10 @@
-import math
 from calculations.Coords_Info import get_density
 from calculations.Energy_Atm import simulate_meteor_atmospheric_entry
 from calculations.Impact_Calculations import ImpactCalculations
 from calculations.Properties_Calculations import PropertiesCalculations
 from flask import Flask, jsonify, request
+from flask_cors import CORS
+import json, math
 
 app = Flask(__name__)
 
@@ -34,12 +35,6 @@ def impact():
         'impact_energy_hiroshima': PropertiesCalculations.convertJoulesHiroshima(final_energy),
     })
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)from flask import Flask, jsonify, request
-from flask_cors import CORS
-import json, math
-
-app = Flask(__name__)
 CORS(app)
 
 API_KEY = 'SXbAVOHpuhWILqtB5rIDFshxLN6PrVQAKwhLNBQh'
