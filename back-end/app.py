@@ -4,13 +4,19 @@ from calculations.Impact_Calculations import ImpactCalculations
 from calculations.Properties_Calculations import PropertiesCalculations
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import json, math, requests, numpy as np
+import json, math, requests, os, numpy as np
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-API_KEY = 'SXbAVOHpuhWILqtB5rIDFshxLN6PrVQAKwhLNBQh'
+API_KEY = os.getenv('NASA_API_KEY')
+if not API_KEY:
+    raise ValueError("NASA_API_KEY not found in environment variables. Please check your .env file.")
 
 # --------------------- Impact Route --------------------- #
 @app.route('/impact', methods=['GET'])
