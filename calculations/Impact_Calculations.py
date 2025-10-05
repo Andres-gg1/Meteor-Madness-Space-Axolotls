@@ -16,16 +16,6 @@ class ImpactCalculations:
     escape_velocity = 11186 #m/s
 
     @staticmethod
-    def calculateKineticEnergyByDiameter(diameter, density, velocity): 
-        # This function calculates the kinetic energy of an asteroid based on diameter, density and velocity
-        return (math.pi/12) * math.pow(diameter,3) * density, math.pow(velocity, 2)
-
-    @staticmethod
-    def calculateKineticEnergyByMass(mass, velocity): 
-        # This function calculates the kinetic energy of the asteroid based on mass and velocity
-        return 0.5 * mass * math.pow(velocity, 2)
-
-    @staticmethod
     def calculateGroupPI(diameter, velocity): 
         # Group Pi is a variable without units that is needed to calculate the diameter of the impact crater
         return (ImpactCalculations.gravity * diameter) / math.pow(velocity, 2)
@@ -47,7 +37,7 @@ class ImpactCalculations:
     @staticmethod
     def calculateExcavatedMass(initial_diameter, ground_density): 
         # This function calculates the mass of the dirt that got expelled from the ground after the impact
-        return (math.pi / 24) * math.pow(initial_diameter, 3) * ground_density
+        return (math.pi / 24) * math.pow(initial_diameter, 3) * ground_density * 1000
 
     @staticmethod
     def calculateMinimalEjectionVelocity(initial_diameter): 
@@ -64,7 +54,7 @@ class ImpactCalculations:
         # This function calculates the velocity that an object needs to reach the stratosphere, since the height of the stratosphere changes depending on the latitude
         return math.sqrt(4 
                          * ImpactCalculations.gravity 
-                         * numpy.interp(math.abs(latitude), [0, 90], [20000, 7000]))
+                         * numpy.interp(abs(latitude), [0, 90], [20000, 7000]))
     
     @staticmethod
     def calculatePercentageToReachTargetVelocity(minimal_ejection_velocity, target_velocity):
