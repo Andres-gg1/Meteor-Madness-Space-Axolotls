@@ -223,7 +223,7 @@ def get_density(lat, lon, radius_km=5, debug=False):
     
     if location_type == 'water':
         if debug: print(f"Location is over water (ocean, sea, lake, etc.)")
-        return {depth: None for depth in DEPTH_RANGES}  # No soil density for water
+        return {depth: 1 for depth in DEPTH_RANGES}  # No soil density for water
     
     elif location_type == 'antarctica':
         if debug: print(f"Location is in Antarctica")
