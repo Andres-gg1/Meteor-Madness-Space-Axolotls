@@ -45,8 +45,6 @@ function calculateImpactMagnitude(energyMt) {
 async function fetchSimilarEarthquakes(lat, lon, magnitude) {
   const minMag = magnitude - 0.5;
   const maxMag = parseFloat(magnitude) + 0.5;
-  alert(minMag);
-  alert(maxMag)
 
   const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${lat}&longitude=${lon}&maxradiuskm=500&starttime=1900-01-01&minmagnitude=${minMag}&maxmagnitude=${maxMag}`;
 
@@ -144,6 +142,8 @@ const ImpactMap = () => {
   const [cities, setCities] = useState([]);
   const [zonesPopulation, setZonesPopulation] = useState({});
   const [earthquakes, setEarthquakes] = useState([]);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [selectedEq, setSelectedEq] = useState(null);
 
 
   useEffect(() => {
@@ -279,7 +279,80 @@ const ImpactMap = () => {
         </Marker>
       ))}
 
+    {/* Sliding Earthquake Panel */}
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: isPanelOpen ? '350px' : '0',
+        height: '100vh',
+        backgroundColor: 'rgba(0,0,0,0.95)',
+        overflowX: 'hidden',
+        transition: '0.3s',
+        padding: isPanelOpen ? '20px' : '0',
+        zIndex: 1000,
+      }}
+    >
+      <button
+        onClick={() => setIsPanelOpen(false)}
+        style={{ position: 'absolute', top: 10, right: 10, fontSize: '18px' }}
+      >
+        ×
+      </button>
+      <h3>Similar Earthquakes</h3>
+      {earthquakes.length === 0 && <p>No similar earthquakes found.</p>}
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        {earthquakes.map(eq => (
+          <li key={eq.id} style={{ marginBottom: '10px', borderBottom: '1px solid #ccc', paddingBottom: '5px' }}>
+            <b>{eq.place}</b> <br />
+            Magnitude: {eq.mag} <br />
+            <button
+              onClick={() => setSelectedEq(eq)}
+              style={{ marginTop: '5px', fontSize: '12px' }}
+            >
+              More Info
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {selectedEq && (
+        <div style={{ marginTop: '20px', backgroundColor: '#36454F', padding: '10px', borderRadius: '6px' }}>
+          <h4>Details</h4>
+          <b>Place:</b> {selectedEq.place} <br />
+          <b>Magnitude:</b> {selectedEq.mag} <br />
+          <b>Date:</b> {selectedEq.time.toLocaleString()} <br />
+          <b>Coordinates:</b> {selectedEq.coords[0].toFixed(2)}, {selectedEq.coords[1].toFixed(2)}
+          <br />
+          <button onClick={() => setSelectedEq(null)} style={{ marginTop: '10px', fontSize: '12px' }}>
+            Close Info
+          </button>
+        </div>
+      )}
+    </div>
+
+    {/* Button to open panel */}
+    <button
+      onClick={() => setIsPanelOpen(true)}
+      style={{
+        position: 'fixed',
+        top: 20,
+        left: 20,
+        zIndex: 1001,
+        padding: '8px 12px',
+        fontSize: '14px',
+        borderRadius: '4px',
+        backgroundColor: '#007bff',
+        color: '#fff',
+        border: 'none',
+        cursor: 'pointer'
+      }}
+    >
+      Show Earthquakes
+    </button>
     </MapContainer>
+
   );
 };
 
