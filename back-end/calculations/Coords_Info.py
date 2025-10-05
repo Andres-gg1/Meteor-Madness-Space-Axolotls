@@ -274,6 +274,6 @@ if __name__ == '__main__':
     print(f"Coordinates: ({lat:.4f}, {lon:.4f})")
     try:
         density = get_density(lat, lon)
-        print(f"Density: {density}\n")
+        print(f"Density: {density['100-200cm']}\n")
     except Exception as e:
         print(f"Error processing coordinates ({lat}, {lon}): {e}\n")
