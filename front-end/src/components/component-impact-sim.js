@@ -403,11 +403,10 @@ export default function MeteorSimulation() {
 
         createMeteor(
           intersect.point,
-          parseFloat(document.getElementById("distValue").innerText),
+          0.4,
           {
-            velocity: parseFloat(document.getElementById("velValue").innerText),
+            velocity: parseFloat(document.getElementById("velValue").innerText) * 0.000001,
             diameter: parseFloat(document.getElementById("diameterValue").innerText),
-            density: parseFloat(document.getElementById("densityValue").innerText),
             mass: parseFloat(document.getElementById("massValue").innerText),
           }
         );
@@ -571,7 +570,7 @@ export default function MeteorSimulation() {
 
           {/* Basic Sliders */}
                 <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
+                {/* <div className="flex flex-col gap-1">
                   <label>
                 Initial Distance: <span id="distValue">0.4</span> ua
               </label>
@@ -583,18 +582,18 @@ export default function MeteorSimulation() {
                 defaultValue="0.4"
                 onChange={(e) => (document.getElementById("distValue").innerText = e.target.value)}
               />
-            </div>
+            </div> */}
 
             <div className="flex flex-col gap-1">
               <label>
-                Zoom: <span id="zoomValue">0</span> %
+                Zoom: <span id="zoomValue">50</span> %
               </label>
               <input
                 type="range"
                 min="0"
                 max="50"
                 step="1"
-                defaultValue="0"
+                defaultValue="50"
                 onChange={(e) => (document.getElementById("zoomValue").innerText = e.target.value)}
               />
             </div>
@@ -619,10 +618,10 @@ export default function MeteorSimulation() {
               </label>
               <input
                 type="range"
-                min="0.0001"
-                max="0.001"
-                step="0.0001"
-                defaultValue="0.0007"
+                min="10"
+                max="70"
+                step="1"
+                defaultValue="40"
                 onChange={(e) => (document.getElementById("velValue").innerText = e.target.value)}
               />
             </div>
@@ -632,19 +631,6 @@ export default function MeteorSimulation() {
           <details className="bg-gray-700 p-2 rounded-md">
             <summary className="cursor-pointer font-semibold">Advanced Parameters</summary>
             <div className="flex flex-col gap-4 mt-2">
-              <div className="flex flex-col gap-1">
-                <label>
-                  Density: <span id="densityValue">1</span>
-                </label>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="10"
-                  step="0.1"
-                  defaultValue="1"
-                  onChange={(e) => (document.getElementById("densityValue").innerText = e.target.value)}
-                />
-              </div>
 
               <div className="flex flex-col gap-1">
                 <label>
