@@ -5,6 +5,9 @@ import { OrbitControls } from 'jsm/controls/OrbitControls.js';
 const container = document.getElementById('three-container') || document.body;
 const w = container.clientWidth || window.innerWidth;
 const h = container.clientHeight || window.innerHeight;
+const gravity = 9.81/6371; // gravity for meteor acceleration
+
+let curMeteorMesh; 
 
 // Scene setup
 let rotation = true; //Rotation control flag
@@ -141,7 +144,8 @@ function onMouseClick(event) {
             }
         }
         animateCamera();
-        updateMeteor(100000, 25, 0, 0, 3000, 0.5, intersect); 
+
+        updateMeteor(intersect.point);
     }
 }
 // Mouse events should be relative to the container
@@ -158,46 +162,154 @@ window.addEventListener('click', (e) => onMouseClick(e), false);
 ////////////////////////////////////////////////////////////////
 // Meteor
 //////////////////////////////////////////////////////////////////
-const geometryMeteor = new THREE.IcosahedronGeometry(0.02, 8, 8);
-const materialMeteor = new THREE.MeshStandardMaterial({
-    map: loader.load("./textures/meteor_texture.jpg")
-    , emissive: 0xffffff,
-    emissiveIntensity: 0.15
-});
-let meteorMesh = new THREE.Mesh(geometryMeteor, materialMeteor);
-
-
-// Set meteor position in the scene
-meteorMesh.position.set(1.5, 0.5, -1.2);
-
-scene.add(meteorMesh);
-
-function updateMeteor(mass, velocity, yaw, pitch, density, volume, intersect) {
-    // Remove old meteor if any
-    if (meteorMesh) scene.remove(meteorMesh);
-
-    // Create meteor mesh
-    const geometryMeteor = new THREE.IcosahedronGeometry(0.05, 2);
+function updateMeteor(collisionPoint, startDistance = 1.4, mass, volume, density, velocity, type, pitchDeg=0, yawDeg=0){
+    scene.remove(curMeteorMesh);
+    if (curMeteorMesh?.trail) scene.remove(curMeteorMesh.trail);
+    if (curMeteorMesh?.burn) scene.remove(curMeteorMesh.burn);
+    // Create a new meteor mesh
+    const geometryMeteor = new THREE.IcosahedronGeometry(0.02, 3);
     const materialMeteor = new THREE.MeshStandardMaterial({
-        color: 0xff6600,
-        emissive: 0x330000,
-        emissiveIntensity: 0.5
+        map: loader.load("./textures/meteor_texture.jpg"),
+        emissive: 0xffffff,
+        emissiveIntensity: 0.15
     });
-    const newMeteor = new THREE.Mesh(geometryMeteor, materialMeteor);
+    let meteorMesh = new THREE.Mesh(geometryMeteor, materialMeteor);
+    const dir = collisionPoint.clone().normalize();
+    const target = dir.clone();
+    const start = target.clone()
+    const yaw = THREE.MathUtils.degToRad(yawDeg);
+    const pitch = THREE.MathUtils.degToRad(pitchDeg);
 
-    // Position meteor 4 Earth radii away
-    const startDistance = 4.0;
-    newMeteor.position.copy(intersect.point.clone().normalize().multiplyScalar(startDistance));
+    //  Apply yaw (rotate horizontally around Y-axis)
+    const yawMatrix = new THREE.Matrix4().makeRotationY(yaw);
+    start.applyMatrix4(yawMatrix);
 
-    // Add to scene and assign to global reference
-    scene.add(newMeteor);
+    //Apply pitch (rotate vertically around axis perpendicular to Y and dir)
+    const sideAxis = new THREE.Vector3().crossVectors(start, new THREE.Vector3(0, 1, 0)).normalize();
+    const pitchMatrix = new THREE.Matrix4().makeRotationAxis(sideAxis, pitch);
+    start.applyMatrix4(pitchMatrix);
+
+    meteorMesh.position.copy(start.clone().multiplyScalar(startDistance));
+
+    const targetPos = dir.clone().multiplyScalar(1.1); 
+    const trajectory = targetPos.clone().sub(start).normalize();
+
+    const velocityVector = trajectory.multiplyScalar(-1 * velocity || -0.0007);
+
+    const trailMaterial = new THREE.LineBasicMaterial({ 
+        color: 0xff6600,
+        transparent: true,
+        opacity: 0.5 
+    });
+    const trailGeometry = new THREE.BufferGeometry().setFromPoints([start, meteorMesh.position]);
+    const trail = new THREE.Line(trailGeometry, trailMaterial);
+    scene.add(trail);
+    meteorMesh.trail = trail;
+
+    const burnTexture = new THREE.TextureLoader().load("./textures/burn_glow.png");
+
+    const burnMaterial = new THREE.MeshBasicMaterial({
+        map: burnTexture,
+        color: 0xff9933,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        opacity: 1
+    });
+    const burn = new THREE.Mesh(geometryMeteor, burnMaterial);
+    meteorMesh.burn = burn;
+    meteorMesh.add(burn);
+
+    const particleCount = 5000;
+    const particleGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const velocities = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+        positions[i * 3 + 0] = 0;
+        positions[i * 3 + 1] = 0;
+        positions[i * 3 + 2] = 0;
+
+        const dir = new THREE.Vector3(
+            (Math.random() - 0.5),
+            (Math.random() - 0.5),
+            (Math.random() - 0.5)
+        ).normalize();
+        velocities[i * 3 + 0] = dir.x * 0.0002; // speed multiplier
+        velocities[i * 3 + 1] = dir.y * 0.0002;
+        velocities[i * 3 + 2] = dir.z * 0.0002;
+    }
+
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const particleMaterial = new THREE.PointsMaterial({
+        color: 0xffaa33,
+        size: 0.003,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    meteorMesh.add(particles); 
+    meteorMesh.particles = particles;
+    meteorMesh.velocities = velocities;
+
+    function animateMeteor() {
+        if (!meteorMesh) return;
+        meteorMesh.position.add(velocityVector);
+
+        const pts = [meteorMesh.position.clone(), meteorMesh.position.clone().sub(trajectory.clone().multiplyScalar(0.2))];
+        trail.geometry.setFromPoints(pts);
+        trailMaterial.opacity = Math.max(0.2, 0.8 - meteorMesh.position.length() / 2);
+
+        // Burn effect appears near atmosphere
+        const dist = meteorMesh.position.length();
+        if (dist > 1.2) {
+            let dirToEarth = meteorMesh.position.clone().normalize().negate();
+            velocityVector.add(dirToEarth.multiplyScalar(gravity * 0.02));
+        }
+        if (dist < 1.20 && dist > 0.1) {
+            burn.material.opacity = THREE.MathUtils.mapLinear(dist, 1.15, 1.02, 0.0, 1.0);
+            if (dist > 1.1) velocityVector.multiplyScalar(0.9825);
+            else if (dist > 1.04) velocityVector.multiplyScalar(0.98);
+            else if (dist > 1.02) velocityVector.multiplyScalar(0.974);
+            
+            const positionsArr = particles.geometry.attributes.position.array;
+            const velArr = meteorMesh.velocities;
+
+            for (let i = 0; i < particleCount; i++) {
+                positionsArr[i * 3 + 0] += velArr[i * 3 + 0];
+                positionsArr[i * 3 + 1] += velArr[i * 3 + 1];
+                positionsArr[i * 3 + 2] += velArr[i * 3 + 2];
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+        } else {
+            burn.material.opacity = 0;
+        }
+
+        // Stop at collision
+        if (dist <= 0.1) {
+            burn.material.opacity = 0;
+            scene.remove(meteorMesh);
+            scene.remove(trail);
+            scene.remove(burn);
+            curMeteorMesh = null;
+            return;
+        }
+
+        requestAnimationFrame(animateMeteor);
+    }
+    animateMeteor();
+
+    curMeteorMesh = meteorMesh; 
+    scene.add(meteorMesh);
 }
-
-
 
 let resetButton = document.getElementById('resetButton');
 resetButton.addEventListener('click', () => {
-    scene.remove(meteorMesh);
+    scene.remove(curMeteorMesh);
     console.log("Resetting meteor position and rotation.");
     // Smoothly transition camera back to default position and lookAt
     const startPos = camera.position.clone();
