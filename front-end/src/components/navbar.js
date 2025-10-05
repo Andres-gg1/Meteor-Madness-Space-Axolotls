@@ -12,7 +12,9 @@ function Navbar() {
       <div className='bg-indigo-800 h-28 flex flex-row justify-between items-center px-4'>
         {/* top bar */}
         <div className='flex flex-row items-center gap-4'>
-          <img src={axolotl} className='h-28 w-auto mt-8' alt="Axolotl"/>
+          <Link to='/'>
+            <img src={axolotl} className='h-28 w-auto mt-8' alt="Axolotl"/>
+          </Link>
           <p className='text-6xl text-white font-bebas'>Space Axolotls</p>
         </div>
         <div className='flex gap-4'>
