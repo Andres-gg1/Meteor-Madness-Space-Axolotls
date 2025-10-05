@@ -543,23 +543,92 @@ export default function MeteorSimulation() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full">
+    <div className="flex h-full w-full">
+      {/* Left: Three.js Canvas */}
       <div
         ref={containerRef}
         id="three-container"
-        className="w-[70%] h-[640px] rounded-xl shadow-2xl"
+        className="flex-1 rounded-xl shadow-2xl"
         style={{
           background: "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.02), rgba(0,0,0,0.02))",
         }}
       />
-      <div className="mt-4 flex gap-3">
-        <button
-          id="resetButton"
-          onClick={handleResetClick}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition duration-300 font-semibold"
-        >
-          Reset View
-        </button>
+
+      {/* Right: Control Panel */}
+      <div className="mt-4 w-80 h-1/2 flex flex-col bg-gray-800 text-white p-4 gap-4">
+        <h2 className="text-xl font-semibold text-center">Meteor Controls</h2>
+
+        {/* Sliders */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <label>
+              Mass: <span id="massValue">1</span>
+            </label>
+            <input
+              type="range"
+              min="0.1"
+              max="5"
+              step="0.1"
+              defaultValue="1"
+              onChange={(e) => {
+                document.getElementById("massValue").innerText = e.target.value;
+              }}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label>
+              Velocity: <span id="velValue">0.0007</span>
+            </label>
+            <input
+              type="range"
+              min="0.0001"
+              max="0.005"
+              step="0.0001"
+              defaultValue="0.0007"
+              onChange={(e) => {
+                document.getElementById("velValue").innerText = e.target.value;
+              }}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label>
+              Angle: <span id="angleValue">0</span>
+            </label>
+            <input
+            className="bg-stone-700"
+              type="range"
+              min="-90"
+              max="90"
+              step="1"
+              defaultValue="0"
+              onChange={(e) => {
+                document.getElementById("angleValue").innerText = e.target.value;
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-4 mt-auto">
+          <button
+            onClick={handleResetClick}
+            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
+          >
+            Reset View
+          </button>
+
+          <button
+            onClick={() => {
+              console.log("Simulate meteor");
+              // TODO: trigger createMeteor with slider values
+            }}
+            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
+          >
+            Simulate
+          </button>
+        </div>
       </div>
     </div>
   );
