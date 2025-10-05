@@ -3,6 +3,7 @@ import { Meteors } from '../components/animations/meteors';
 import  meteorite  from '../assets/meteorite.png';
 import meteorImpact from '../assets/meteor-impact.jpeg';
 import orbitSim from '../assets/orbit-simulation.jpeg';
+import { Link } from 'react-router-dom';
 
 function Home() {
 
@@ -84,29 +85,29 @@ function Home() {
 
         <div className="mt-8 flex flex-row w-full h-[24rem] gap-6 px-20">
           {/* Watch Meteorites Card */}
-          <div className="relative border-4 border-indigo-500 h-full w-full rounded-3xl overflow-hidden group hover:scale-[1.02] transition duration-300 cursor-pointer">
-            {/* Imagen de fondo */}
-            <img 
-              src={meteorImpact} 
-              alt="Meteor background" 
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            
-            {/* Overlay oscuro */}
-            <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-300"></div>
-            
-            {/* Texto en bottom-right */}
-            <div className="absolute bottom-6 right-6 text-right z-10">
-              <span className="pointer-events-none bg-gradient-to-b from-white to-stone-400 bg-clip-text text-7xl leading-none font-bebas whitespace-pre-wrap text-transparent drop-shadow-lg">
-                SIMULATE
-                <br />
-                IMPACT
-              </span>
-            </div>
-          </div>
+            <Link to="/simulate" className="relative border-4 border-indigo-500 h-full w-full rounded-3xl overflow-hidden group hover:scale-[1.02] transition duration-300 cursor-pointer">
+              {/* Imagen de fondo */}
+              <img 
+                src={meteorImpact} 
+                alt="Meteor background" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              
+              {/* Overlay oscuro */}
+              <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-300"></div>
+              
+              {/* Texto en bottom-right */}
+              <div className="absolute bottom-6 right-6 text-right z-10">
+                <span className="pointer-events-none bg-gradient-to-b from-white to-stone-400 bg-clip-text text-7xl leading-none font-bebas whitespace-pre-wrap text-transparent drop-shadow-lg">
+                  SIMULATE
+                  <br/>
+                  IMPACT
+                </span>
+              </div>
+            </Link>
 
           {/* Simulate Impact Card */}
-          <div className="relative border-4 border-purple-600 h-full w-full rounded-3xl overflow-hidden group hover:scale-[1.02] transition duration-300 cursor-pointer">
+          <Link to="/watch" div className="relative border-4 border-purple-600 h-full w-full rounded-3xl overflow-hidden group hover:scale-[1.02] transition duration-300 cursor-pointer">
             {/* Imagen de fondo */}
             <img 
               src={orbitSim} 
@@ -125,7 +126,7 @@ function Home() {
                 METEORITES
               </span>
             </div>
-          </div>
+          </Link>
         </div>
 
 
