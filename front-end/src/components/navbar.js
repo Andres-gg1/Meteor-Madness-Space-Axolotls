@@ -1,11 +1,14 @@
 import axolotl from '../assets/axolotl.png';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Github } from 'lucide-react';
 
 
 
 function Navbar() {
+  const location = useLocation();
 
+  const isOrbitViewer = location.pathname === '/watch';
+  const isImpactSim = location.pathname === '/simulate';
 
 
     return (
@@ -19,16 +22,20 @@ function Navbar() {
         </div>
         <div className='flex gap-4'>
           <Link 
-            to="/watch"
-            className="bg-white hover:bg-gray-100 text-indigo-800 font-bold px-6 py-2 rounded-lg transition duration-300"
-          >
+              to="/watch"
+              onClick={(e) => isOrbitViewer && e.preventDefault()}
+              className={`bg-white text-indigo-800 font-bold px-6 py-2 rounded-lg transition duration-300 
+                ${isOrbitViewer ? 'opacity-50 cursor-default pointer-events-none' : 'hover:bg-gray-100'}`}
+            >
             Orbit Viewer
           </Link>
             
             <Link 
             to="/simulate"
-            className="bg-white hover:bg-gray-100 text-indigo-800 font-bold px-6 py-2 rounded-lg transition duration-300"
-          >
+            onClick={(e) => isImpactSim && e.preventDefault()}
+              className={`bg-white text-indigo-800 font-bold px-6 py-2 rounded-lg transition duration-300 
+                ${isImpactSim ? 'opacity-50 cursor-default pointer-events-none' : 'hover:bg-gray-100'}`}
+            >
             Impact Simulation
           </Link>
 
