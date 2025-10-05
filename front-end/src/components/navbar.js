@@ -12,30 +12,32 @@ function Navbar() {
 
 
     return (
-      <div className='bg-indigo-800 h-28 flex flex-row justify-between items-center px-4'>
+      <div className='bg-indigo-800 h-20 flex flex-row justify-between items-center px-4'>
         {/* top bar */}
         <div className='flex flex-row items-center gap-4'>
           <Link to='/'>
             <img src={axolotl} className='h-28 w-auto mt-8' alt="Axolotl"/>
           </Link>
-          <p className='text-6xl text-white font-bebas'>Space Axolotls</p>
+          <p className='text-6xl text-white font-bebas mt-2'>Space Axolotls</p>
         </div>
-        <div className='flex gap-4'>
+        <div className='flex gap-4 items-center'>
           <Link 
               to="/watch"
               onClick={(e) => isOrbitViewer && e.preventDefault()}
-              className={`bg-white text-indigo-800 font-bold px-6 py-2 rounded-lg transition duration-300 
-                ${isOrbitViewer ? 'opacity-50 cursor-default pointer-events-none' : 'hover:bg-gray-100'}`}
+              className={`flex items-center justify-center 
+                          bg-gradient-to-br from-sky-400 to-blue-600 hover:opacity-70 text-xl font-bold px-6 rounded-lg transition duration-300 text-white 
+                ${isOrbitViewer ? 'h-14 opacity-90 cursor-default pointer-events-none' : 'hover:bg-gray-100 h-10'}`}
             >
             Orbit Viewer
           </Link>
             
-            <Link 
+          <Link 
             to="/simulate"
             onClick={(e) => isImpactSim && e.preventDefault()}
-              className={`bg-white text-indigo-800 font-bold px-6 py-2 rounded-lg transition duration-300 
-                ${isImpactSim ? 'opacity-50 cursor-default pointer-events-none' : 'hover:bg-gray-100'}`}
-            >
+            className={`flex items-center justify-center 
+                        bg-gradient-to-tl from-sky-400 to-blue-600 hover:opacity-70 text-xl font-bold px-6 rounded-lg transition duration-300 text-white
+              ${isImpactSim ? 'h-14 opacity-90 cursor-default pointer-events-none' : 'hover:bg-gray-100 h-10'}`}
+          >
             Impact Simulation
           </Link>
 
