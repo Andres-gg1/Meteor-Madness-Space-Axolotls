@@ -14,17 +14,15 @@ def simulate_meteor_atmospheric_entry(diameter_m, velocity_m_s, entry_angle_deg)
         diameter_m: Diameter of the meteor (m)
         velocity_m_s: Initial velocity (m/s)
         entry_angle_deg: Entry angle from horizontal (degrees)
-        initial_altitude_m: Initial altitude (m)
-        step_m: Step size for integration (m)
 
     Returns:
-        Ef: Final energy (J)
+        Ef: Final kinetic energy (J)
         v: Final velocity at ground (m/s)
         mass: Meteor mass (kg)
         E_drag: Energy lost due to atmospheric drag (J)
         percent_lost: Percentage of initial kinetic energy lost
     """
-    step_m=100
+    step_m = 100
     initial_altitude_m = 100_000
     theta = np.radians(entry_angle_deg)
     radius = diameter_m / 2
@@ -34,19 +32,20 @@ def simulate_meteor_atmospheric_entry(diameter_m, velocity_m_s, entry_angle_deg)
 
     v = velocity_m_s
     h = initial_altitude_m
-    E_drag = 0
 
+    # --- integrate descent ---
     while h > 0:
         rho_air = calculate_air_density(h)
         Fd = 0.5 * rho_air * Cd * A * v**2
-        delta_s = step_m / np.sin(theta)  # Path distance along trajectory
-        # Update velocity considering drag and gravity along trajectory
+        delta_s = step_m / np.sin(theta)  # Path length along trajectory
         v = np.sqrt(max(v**2 + 2 * g * np.sin(theta) * delta_s - 2 * Fd * delta_s / mass, 0))
-        E_drag += Fd * delta_s
         h -= step_m
 
+    # --- energies ---
     Ek_initial = 0.5 * mass * velocity_m_s**2
-    Ef = 0.5 * mass * v**2 - E_drag
+    Ek_final = 0.5 * mass * v**2
+    Ef = Ek_final
+    E_drag = Ek_initial - Ek_final   # ensures consistency
     percent_lost = 100 * E_drag / Ek_initial
 
     return Ef, v, mass, E_drag, percent_lost
