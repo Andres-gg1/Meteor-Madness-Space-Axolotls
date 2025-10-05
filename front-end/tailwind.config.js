@@ -21,6 +21,9 @@ module.exports = {
           },
         },
       },
+      rotate: {
+        '-19' : '-19deg',
+      },
     },
   },
   plugins: [],

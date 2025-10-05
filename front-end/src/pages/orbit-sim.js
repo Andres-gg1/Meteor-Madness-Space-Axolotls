@@ -119,6 +119,11 @@ function OrbitSim() {
                     {isLoading ? 'Generating...' : 'Generate Plot'}
                 </button>
                 </form>
+                <h1 className='underline color-blue'>
+                    <a href='https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/'>
+                    NASA API to check Asteroid IDs
+                    </a>
+                </h1>
             </div>
 
 
