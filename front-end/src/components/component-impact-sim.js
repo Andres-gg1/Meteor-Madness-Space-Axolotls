@@ -1,3 +1,4 @@
+import { Diameter } from "lucide-react";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
@@ -133,7 +134,7 @@ export default function MeteorSimulation() {
     const createMeteor = (
       collisionPoint,
       startDistance = 1.4,
-      opts = {}
+      opts = { yawDeg: 0, pitchDeg: 0, velocity: 0.0007, diameter: 1000, density: 1, mass: 1000 }
     ) => {
       // remove previous
       if (curMeteorMeshRef.current) {
@@ -142,7 +143,8 @@ export default function MeteorSimulation() {
         if (curMeteorMeshRef.current.burn) scene.remove(curMeteorMeshRef.current.burn);
       }
 
-      const geometryMeteor = new THREE.IcosahedronGeometry(0.02, 3);
+      const meteorRadiusMeters = opts.diameter / 2;
+      const geometryMeteor = new THREE.IcosahedronGeometry(meteorRadiusMeters / 6371000, 3);
       const meteorTex = trackTexture(loader.load("./textures/meteor_texture.jpg"));
       const materialMeteor = new THREE.MeshStandardMaterial({
         map: loader.load("/three-textures/meteor_texture.jpg"),
@@ -162,6 +164,9 @@ export default function MeteorSimulation() {
       // add meteor point light
       const mLight = new THREE.PointLight(0xffaa55, 2.5, 2.5);
       scene.add(mLight);
+      // Set light intensity based on meteor diameter (larger meteor = brighter light)
+      //mLight.intensity = opts.diameter > 5000 ? 5.0 : opts.diameter > 2000 ? 3.5 : 0.01;
+      mLight.intensity = 0;
       meteorLightRef.current = mLight;
 
       const yawMatrix = new THREE.Matrix4().makeRotationY(yaw);
@@ -171,7 +176,7 @@ export default function MeteorSimulation() {
       const pitchMatrix = new THREE.Matrix4().makeRotationAxis(sideAxis, pitch);
       start.applyMatrix4(pitchMatrix);
 
-      meteorMesh.position.copy(start.clone().multiplyScalar(startDistance));
+      meteorMesh.position.copy(start.clone().multiplyScalar(startDistance + 1));
 
       const targetPos = dir.clone().multiplyScalar(1.1);
       const trajectory = targetPos.clone().sub(start).normalize();
@@ -211,7 +216,7 @@ export default function MeteorSimulation() {
       const positions = new Float32Array(particleCount * 3);
       const velocities = new Float32Array(particleCount * 3);
 
-      const meteorRadius = 0.019;
+      const meteorRadius = document.getElementById("diameterValue").innerText / 2 / 6371000;
       const earthDir = meteorMesh.position.clone().normalize();
       let particleIndex = 0;
       const layers = 14;
@@ -287,13 +292,7 @@ export default function MeteorSimulation() {
           const offset = 0.013;
           const lightPos = meteorMesh.position.clone().add(dirFromEarth.clone().multiplyScalar(offset));
           meteorLightRef.current.position.copy(lightPos);
-          meteorLightRef.current.intensity = THREE.MathUtils.mapLinear(
-            meteorMesh.position.length(),
-            1.3,
-            1.0,
-            0.7,
-            2.0
-          );
+          meteorLightRef.current.intensity = opts.diameter > 5000 ? 0.5 : opts.diameter > 2000 ? 0.25 : 0.1;
         }
 
         // update trail
@@ -324,7 +323,7 @@ export default function MeteorSimulation() {
           burn.material.opacity = 0;
         }
 
-        if (dist < 1.03 && dist > 0.1) {
+        if (dist < 1.01 && dist > 0.1) {
           const positionsArr = particles.geometry.attributes.position.array;
           const velArr = meteorMesh.velocities;
           for (let i = 0; i < particleCount; i++) {
@@ -387,7 +386,7 @@ export default function MeteorSimulation() {
 
         // smooth camera transition
         const startPos = camera.position.clone();
-        const endPos = newPoint.clone().multiplyScalar(2.2).divideScalar(1.7);
+        const endPos = newPoint.clone().multiplyScalar(2.2).divideScalar(document.getElementById("zoomValue").innerText / 100 * 2 + 1);
         const startLook = camera.getWorldDirection(new THREE.Vector3()).clone();
         const endLook = intersect.point.clone();
         let progress = 0;
@@ -402,7 +401,16 @@ export default function MeteorSimulation() {
         }
         animateCamera();
 
-        createMeteor(intersect.point);
+        createMeteor(
+          intersect.point,
+          parseFloat(document.getElementById("distValue").innerText),
+          {
+            velocity: parseFloat(document.getElementById("velValue").innerText),
+            diameter: parseFloat(document.getElementById("diameterValue").innerText),
+            density: parseFloat(document.getElementById("densityValue").innerText),
+            mass: parseFloat(document.getElementById("massValue").innerText),
+          }
+        );
       }
     }
 
@@ -541,7 +549,6 @@ export default function MeteorSimulation() {
     }
     animateCameraReset();
   };
-
   
   return (
     <div className="flex w-full h-full gap-4 bg-black">
@@ -557,138 +564,124 @@ export default function MeteorSimulation() {
       ></div>
 
       {/* Right: Control Panel */}
-      <div className="w-80 flex flex-col bg-gray-800 text-white p-4 gap-4 rounded-xl shadow-2xl overflow-auto">
-        <h2 className="text-xl font-semibold text-center">Meteor Controls</h2>
+      <div className="w-80 flex flex-col bg-gray-800 text-white p-4 m-4 gap-4 rounded-xl shadow-2xl">
+        {/* Top: Sliders and Advanced Parameters */}
+        <div className="flex flex-col gap-4 overflow-auto">
+          <h2 className="text-xl font-semibold text-center">Meteor Controls</h2>
 
-        {/* Basic Sliders */}
-        <div className="flex flex-col gap-4">
-          {/* Initial Distance */}
-          <div className="flex flex-col gap-1">
-            <label>
-              Initial Distance: <span id="distValue">1.4</span>
-            </label>
-            <input
-              type="range"
-              min="0.5"
-              max="3"
-              step="0.01"
-              defaultValue="1.4"
-              onChange={(e) => {
-                document.getElementById("distValue").innerText = e.target.value;
-              }}
-            />
+          {/* Basic Sliders */}
+                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <label>
+                Initial Distance: <span id="distValue">0.4</span> ua
+              </label>
+              <input
+                type="range"
+                min="0.2"
+                max="1"
+                step="0.01"
+                defaultValue="0.4"
+                onChange={(e) => (document.getElementById("distValue").innerText = e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label>
+                Zoom: <span id="zoomValue">0</span> %
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="50"
+                step="1"
+                defaultValue="0"
+                onChange={(e) => (document.getElementById("zoomValue").innerText = e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label>
+                Diameter: <span id="diameterValue">1000</span> m
+              </label>
+              <input
+                type="range"
+                min="100"
+                max="10000"
+                step="100"
+                defaultValue="1000"
+                onChange={(e) => (document.getElementById("diameterValue").innerText = e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label>
+                Initial Velocity: <span id="velValue">0.0007</span>
+              </label>
+              <input
+                type="range"
+                min="0.0001"
+                max="0.001"
+                step="0.0001"
+                defaultValue="0.0007"
+                onChange={(e) => (document.getElementById("velValue").innerText = e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Volume */}
-          <div className="flex flex-col gap-1">
-            <label>
-              Volume: <span id="volumeValue">1</span>
-            </label>
-            <input
-              type="range"
-              min="0.01"
-              max="5"
-              step="0.01"
-              defaultValue="1"
-              onChange={(e) => {
-                document.getElementById("volumeValue").innerText = e.target.value;
-              }}
-            />
-          </div>
+          {/* Advanced Parameters */}
+          <details className="bg-gray-700 p-2 rounded-md">
+            <summary className="cursor-pointer font-semibold">Advanced Parameters</summary>
+            <div className="flex flex-col gap-4 mt-2">
+              <div className="flex flex-col gap-1">
+                <label>
+                  Density: <span id="densityValue">1</span>
+                </label>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="10"
+                  step="0.1"
+                  defaultValue="1"
+                  onChange={(e) => (document.getElementById("densityValue").innerText = e.target.value)}
+                />
+              </div>
 
-          {/* Initial Velocity */}
-          <div className="flex flex-col gap-1">
-            <label>
-              Initial Velocity: <span id="velValue">0.0007</span>
-            </label>
-            <input
-              type="range"
-              min="0.0001"
-              max="0.01"
-              step="0.0001"
-              defaultValue="0.0007"
-              onChange={(e) => {
-                document.getElementById("velValue").innerText = e.target.value;
-              }}
-            />
-          </div>
+              <div className="flex flex-col gap-1">
+                <label>
+                  Mass: <span id="massValue">1</span>
+                </label>
+                <input
+                  type="range"
+                  min="0.01"
+                  max="5"
+                  step="0.01"
+                  defaultValue="1"
+                  onChange={(e) => (document.getElementById("massValue").innerText = e.target.value)}
+                />
+              </div>
+            </div>
+          </details>
         </div>
 
-        {/* Advanced Parameters Dropdown */}
-        <details className="bg-gray-700 p-2 rounded-md">
-          <summary className="cursor-pointer font-semibold">Advanced Parameters</summary>
-          <div className="flex flex-col gap-4 mt-2">
-            {/* Density */}
-            <div className="flex flex-col gap-1">
-              <label>
-                Density: <span id="densityValue">1</span>
-              </label>
-              <input
-                type="range"
-                min="0.1"
-                max="10"
-                step="0.1"
-                defaultValue="1"
-                onChange={(e) => {
-                  document.getElementById("densityValue").innerText = e.target.value;
-                }}
-              />
-            </div>
-
-            {/* Mass */}
-            <div className="flex flex-col gap-1">
-              <label>
-                Mass: <span id="massValue">1</span>
-              </label>
-              <input
-                type="range"
-                min="0.01"
-                max="5"
-                step="0.01"
-                defaultValue="1"
-                onChange={(e) => {
-                  document.getElementById("massValue").innerText = e.target.value;
-                }}
-              />
-            </div>
-          </div>
-        </details>
+        {/* Bottom: Simulation Info / Results */}
+        <div
+          id="simulationResults"
+          className="flex-1 p-4 mt-4 bg-gray-700 rounded-lg overflow-auto text-sm"
+        >
+          <p className="text-center text-gray-400">Simulation info will appear here</p>
+        </div>
 
         {/* Buttons */}
-        <div className="flex gap-4 mt-auto">
+        <div className="flex gap-4 mt-4">
           <button
             onClick={handleResetClick}
             className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
           >
             Reset View
           </button>
-
-          <button
-            onClick={() => {
-              const distance = parseFloat(document.getElementById("distValue").innerText);
-              const volume = parseFloat(document.getElementById("volumeValue").innerText);
-              const velocity = parseFloat(document.getElementById("velValue").innerText);
-              const density = parseFloat(document.getElementById("densityValue").innerText);
-              const mass = parseFloat(document.getElementById("massValue").innerText);
-
-              // Validate: either volume or (mass & density)
-              if (volume <= 0 && (mass <= 0 || density <= 0)) {
-                alert("Please set either volume or both mass and density!");
-                return;
-              }
-
-              // Compute mass if volume & density given
-              const finalMass = mass > 0 ? mass : volume * density;
-
-              console.log("Simulate meteor", { distance, finalMass, velocity, density, volume });
-              // TODO: call createMeteor with these values
-            }}
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
-          >
-            Simulate
-          </button>
         </div>
       </div>
     </div>
+
   );
 }
