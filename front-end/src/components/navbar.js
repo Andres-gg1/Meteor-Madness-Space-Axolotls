@@ -26,7 +26,7 @@ function Navbar() {
               onClick={(e) => isOrbitViewer && e.preventDefault()}
               className={`flex items-center justify-center 
                           bg-gradient-to-br from-sky-400 to-blue-600 hover:opacity-70 text-xl font-bold px-6 rounded-lg transition duration-300 text-white 
-                ${isOrbitViewer ? 'h-14 opacity-90 cursor-default pointer-events-none' : 'hover:bg-gray-100 h-10'}`}
+                ${isOrbitViewer ? 'h-10 opacity-90 cursor-default pointer-events-none' : 'hover:bg-gray-100 h-14'}`}
             >
             Orbit Viewer
           </Link>
@@ -36,7 +36,7 @@ function Navbar() {
             onClick={(e) => isImpactSim && e.preventDefault()}
             className={`flex items-center justify-center 
                         bg-gradient-to-tl from-sky-400 to-blue-600 hover:opacity-70 text-xl font-bold px-6 rounded-lg transition duration-300 text-white
-              ${isImpactSim ? 'h-14 opacity-90 cursor-default pointer-events-none' : 'hover:bg-gray-100 h-10'}`}
+              ${isImpactSim ? 'h-10 opacity-90 cursor-default pointer-events-none' : 'hover:bg-gray-100 h-14'}`}
           >
             Impact Simulation
           </Link>
