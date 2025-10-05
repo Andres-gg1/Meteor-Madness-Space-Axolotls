@@ -8,6 +8,7 @@ const h = container.clientHeight || window.innerHeight;
 const gravity = 9.81/6371; // gravity for meteor acceleration
 
 let curMeteorMesh; 
+let meteorLight = null;
 
 // Scene setup
 let rotation = true; //Rotation control flag
@@ -66,6 +67,7 @@ const atmosMat = new THREE.MeshBasicMaterial({
     opacity: 0.1
 });
 const atmosMesh = new THREE.Mesh(geometryAtmos, atmosMat)
+atmosMesh.renderOrder = 1;
 earthGroup.add(atmosMesh)
 
 //Sun lighting setup
@@ -170,8 +172,10 @@ function updateMeteor(collisionPoint, startDistance = 1.4, mass, volume, density
     const geometryMeteor = new THREE.IcosahedronGeometry(0.02, 3);
     const materialMeteor = new THREE.MeshStandardMaterial({
         map: loader.load("./textures/meteor_texture.jpg"),
-        emissive: 0xffffff,
-        emissiveIntensity: 0.15
+        emissive: 0xffff50,        // glowing color
+        emissiveIntensity: 4.0,    // brightness
+        roughness: 0.4,
+        metalness: 0.2
     });
     let meteorMesh = new THREE.Mesh(geometryMeteor, materialMeteor);
     const dir = collisionPoint.clone().normalize();
@@ -179,6 +183,8 @@ function updateMeteor(collisionPoint, startDistance = 1.4, mass, volume, density
     const start = target.clone()
     const yaw = THREE.MathUtils.degToRad(yawDeg);
     const pitch = THREE.MathUtils.degToRad(pitchDeg);
+    meteorLight = new THREE.PointLight(0xffaa55, 2.5, 2.5); // color, intensity, distance
+    scene.add(meteorLight);
 
     //  Apply yaw (rotate horizontally around Y-axis)
     const yawMatrix = new THREE.Matrix4().makeRotationY(yaw);
@@ -208,15 +214,18 @@ function updateMeteor(collisionPoint, startDistance = 1.4, mass, volume, density
 
     const burnTexture = new THREE.TextureLoader().load("./textures/burn_glow.png");
 
-    const burnMaterial = new THREE.MeshBasicMaterial({
+    const burnMaterial = new THREE.MeshStandardMaterial({
         map: burnTexture,
         color: 0xff9933,
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
-        opacity: 1
+        opacity: 1,
+        emissive: 0xff9933,
+        emissiveIntensity: 2
     });
     const burn = new THREE.Mesh(geometryMeteor, burnMaterial);
+    burn.scale.set(1.1, 1.1, 1.1);
     meteorMesh.burn = burn;
     meteorMesh.add(burn);
 
@@ -224,21 +233,60 @@ function updateMeteor(collisionPoint, startDistance = 1.4, mass, volume, density
     const particleGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const velocities = new Float32Array(particleCount * 3);
+    
 
-    for (let i = 0; i < particleCount; i++) {
-        positions[i * 3 + 0] = 0;
-        positions[i * 3 + 1] = 0;
-        positions[i * 3 + 2] = 0;
+    const meteorRadius = 0.019;
+    const earthDir = meteorMesh.position.clone().normalize(); // direction from meteor to Earth
 
-        const dir = new THREE.Vector3(
-            (Math.random() - 0.5),
-            (Math.random() - 0.5),
-            (Math.random() - 0.5)
-        ).normalize();
-        velocities[i * 3 + 0] = dir.x * 0.0002; // speed multiplier
-        velocities[i * 3 + 1] = dir.y * 0.0002;
-        velocities[i * 3 + 2] = dir.z * 0.0002;
+    let particleIndex = 0;
+    const layers = 14;              // how many “shells” inside the meteor
+    const shrinkStep = meteorRadius / layers;  // how much smaller each shell is
+
+    for (let layer = 0; layer < layers; layer++) {
+        const r = meteorRadius - layer * shrinkStep * (0.8 + Math.random() * 0.4); // small random offset per layer
+        for (let i = 0; i < particleCount / layers; i++) {
+            let x, y, z, dot;
+
+            // Pick a random point on the meteor hemisphere *away from Earth*
+            do {
+                const u = Math.random();
+                const v = Math.random();
+                const theta = Math.acos(2 * u - 1);
+                const phi = 2 * Math.PI * v;
+
+                x = r * Math.sin(theta) * Math.cos(phi);
+                y = r * Math.sin(theta) * Math.sin(phi);
+                z = r * Math.cos(theta);
+
+                const point = new THREE.Vector3(x, y, z).normalize();
+                dot = point.dot(earthDir);
+            } while (dot > 0.2); // keep only away-from-Earth side
+
+            // Position the particle
+            positions[particleIndex * 3 + 0] = x;
+            positions[particleIndex * 3 + 1] = y;
+            positions[particleIndex * 3 + 2] = z;
+
+            // Direction: mostly away from Earth
+            const away = earthDir.clone();
+            const surfaceNormal = new THREE.Vector3(x, y, z).normalize();
+            const mix = 0.6;
+            const dir = surfaceNormal.multiplyScalar(1 - mix).add(away.multiplyScalar(mix));
+
+            dir.x += (Math.random() - 0.5) * 0.3;
+            dir.y += (Math.random() - 0.5) * 0.3;
+            dir.z += (Math.random() - 0.5) * 0.3;
+            dir.normalize();
+
+            const speed = 0.0002;
+            velocities[particleIndex * 3 + 0] = dir.x * speed;
+            velocities[particleIndex * 3 + 1] = dir.y * speed;
+            velocities[particleIndex * 3 + 2] = dir.z * speed;
+
+            particleIndex++;
+        }
     }
+
 
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
@@ -259,6 +307,17 @@ function updateMeteor(collisionPoint, startDistance = 1.4, mass, volume, density
     function animateMeteor() {
         if (!meteorMesh) return;
         meteorMesh.position.add(velocityVector);
+        if (meteorLight) {
+            // Direction from Earth's center to meteor
+            const dirFromEarth = meteorMesh.position.clone().normalize();
+
+            // Offset the light slightly away from Earth’s surface
+            const offset = 0.013; 
+            const lightPos = meteorMesh.position.clone().add(dirFromEarth.clone().multiplyScalar(offset));
+
+            meteorLight.position.copy(lightPos);
+            meteorLight.intensity = THREE.MathUtils.mapLinear(meteorMesh.position.length(), 1.3, 1.0, 0.7, 2.0);
+        }
 
         const pts = [meteorMesh.position.clone(), meteorMesh.position.clone().sub(trajectory.clone().multiplyScalar(0.2))];
         trail.geometry.setFromPoints(pts);
@@ -272,26 +331,33 @@ function updateMeteor(collisionPoint, startDistance = 1.4, mass, volume, density
         }
         if (dist < 1.20 && dist > 0.1) {
             burn.material.opacity = THREE.MathUtils.mapLinear(dist, 1.15, 1.02, 0.0, 1.0);
-            if (dist > 1.1) velocityVector.multiplyScalar(0.9825);
-            else if (dist > 1.04) velocityVector.multiplyScalar(0.98);
+            if (dist > 1.1){
+                velocityVector.multiplyScalar(0.9825);
+                meteorMesh.material.emissiveIntensity = 6.0;
+            } 
+            else if (dist > 1.04) {
+                velocityVector.multiplyScalar(0.98);
+                meteorMesh.material.emissiveIntensity = 8.0;
+            }
             else if (dist > 1.02) velocityVector.multiplyScalar(0.974);
-            
+        } 
+        if (dist < 1.03 && dist > 0.1) {
             const positionsArr = particles.geometry.attributes.position.array;
             const velArr = meteorMesh.velocities;
-
             for (let i = 0; i < particleCount; i++) {
-                positionsArr[i * 3 + 0] += velArr[i * 3 + 0];
-                positionsArr[i * 3 + 1] += velArr[i * 3 + 1];
-                positionsArr[i * 3 + 2] += velArr[i * 3 + 2];
+                positionsArr[i * 3 + 0] += velArr[i * 3 + 0]*0.99;
+                positionsArr[i * 3 + 1] += velArr[i * 3 + 1]*0.99;
+                positionsArr[i * 3 + 2] += velArr[i * 3 + 2]*0.99;
             }
             particles.geometry.attributes.position.needsUpdate = true;
-        } else {
+        }else {
             burn.material.opacity = 0;
         }
 
         // Stop at collision
         if (dist <= 0.1) {
             burn.material.opacity = 0;
+            if (meteorLight) scene.remove(meteorLight);
             scene.remove(meteorMesh);
             scene.remove(trail);
             scene.remove(burn);
@@ -310,6 +376,7 @@ function updateMeteor(collisionPoint, startDistance = 1.4, mass, volume, density
 let resetButton = document.getElementById('resetButton');
 resetButton.addEventListener('click', () => {
     scene.remove(curMeteorMesh);
+    if (meteorLight) scene.remove(meteorLight);
     console.log("Resetting meteor position and rotation.");
     // Smoothly transition camera back to default position and lookAt
     const startPos = camera.position.clone();
