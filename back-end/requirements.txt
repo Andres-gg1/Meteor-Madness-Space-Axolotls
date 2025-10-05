@@ -1,0 +1,5 @@
+numpy
+dotenv
+flask
+flask_cors
+requests
