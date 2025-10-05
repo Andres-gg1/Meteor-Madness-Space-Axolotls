@@ -269,14 +269,11 @@ def get_density(lat, lon, radius_km=5, debug=False):
 
 # --- Examples ---
 if __name__ == '__main__':
-    # GENERATE 100 RANDOM COORDINATES AND PRINT THEIR DENSITIES
-    import random
-    for _ in range(10):
-        lat = random.uniform(-90, 90)
-        lon = random.uniform(-180, 180)
-        print(f"Coordinates: ({lat:.4f}, {lon:.4f})")
-        try:
-            density = get_density(lat, lon)
-            print(f"Density: {density}\n")
-        except Exception as e:
-            print(f"Error processing coordinates ({lat}, {lon}): {e}\n")
+    
+    (lat, lon) = (20.783216151505812, -103.24966816313234)
+    print(f"Coordinates: ({lat:.4f}, {lon:.4f})")
+    try:
+        density = get_density(lat, lon)
+        print(f"Density: {density}\n")
+    except Exception as e:
+        print(f"Error processing coordinates ({lat}, {lon}): {e}\n")

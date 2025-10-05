@@ -1,4 +1,41 @@
+import math
+from calculations.Coords_Info import get_density
+from calculations.Energy_Atm import simulate_meteor_atmospheric_entry
+from calculations.Impact_Calculations import ImpactCalculations
+from calculations.Properties_Calculations import PropertiesCalculations
 from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+@app.route('/impact', methods=['GET'])
+def impact():
+    velocity = float(request.args.get('velocity'))
+    mass = float(request.args.get('mass'))
+    diameter = float(request.args.get('diameter'))
+    angle = float(request.args.get('angle'))
+    latitude = float(request.args.get('latitude'))
+    longitude = float(request.args.get('longitude'))
+
+    (final_energy, final_velocity, final_mass, lost_energy, percent_lost) = simulate_meteor_atmospheric_entry(diameter, velocity, angle)
+
+    asteroid_density = (mass / ((4/3) * math.pi * (diameter/2)**3)) / 1000  # Convert to g/cm³
+    ground_density = get_density(latitude, longitude)  # g/cm³
+
+    init_crater_diameter = ImpactCalculations.calculateInitialCraterDiameter(diameter, asteroid_density, velocity, ground_density)
+    excavated_mass = ImpactCalculations.calculateExcavatedMass(init_crater_diameter, ground_density)
+    minimal_ejection_velocity = ImpactCalculations.calculateMinimalEjectionVelocity(init_crater_diameter)
+    percent_to_space = ImpactCalculations.calculateMassToEscapeGravity(minimal_ejection_velocity, excavated_mass)
+
+    return jsonify({
+        'percent_to_space': percent_to_space,
+        'impact_energy': final_energy,
+        'lost_energy': lost_energy,
+        'impact_energy_tnt': PropertiesCalculations.convertJoulesTNTTons(final_energy),
+        'impact_energy_hiroshima': PropertiesCalculations.convertJoulesHiroshima(final_energy),
+    })
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)from flask import Flask, jsonify, request
 from flask_cors import CORS
 import json, math
 
