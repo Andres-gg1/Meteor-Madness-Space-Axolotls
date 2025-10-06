@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState} from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Link } from "react-router-dom";
@@ -17,6 +17,10 @@ export default function MeteorDisplay() {
   const latitudeRef = useRef(0);
   const longitudeRef = useRef(0);
   const impactEnergyRef = useRef(0);
+
+  const [latitude, setLatitude] = useState(0);
+  const [longitude, setLongitude] = useState(0);
+  const [impactEnergy, setImpactEnergy] = useState(0);
 
   useEffect(() => {
     const container = containerRef.current || document.body;
@@ -146,9 +150,11 @@ export default function MeteorDisplay() {
         const mass = opts.mass * 1000 || 1000;
         const angle = 90;
         const latitude = 90 - (Math.acos(collisionPoint.y / collisionPoint.length()) * 180) / Math.PI;
-        latitudeRef.current = latitude;
         const longitude = ((Math.atan2(collisionPoint.z, collisionPoint.x) * 180) / Math.PI + 180) % 360 - 180;
-        longitudeRef.current = longitude;
+
+        setLatitude(latitude);
+        setLongitude(longitude);
+
         const response = await fetch(
           `http://127.0.0.1:5000/impact?velocity=${velocity}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${latitude}&longitude=${longitude}`
         );
@@ -158,16 +164,18 @@ export default function MeteorDisplay() {
 
         // update your simulation results panel
         const resultsDiv = document.getElementById("simulationResults");
-        impactEnergyRef.current = data.impact_energy;
-        if (resultsDiv) {
-          resultsDiv.innerHTML = `
-            <p>Impact energy: ${data.impact_energy.toFixed(2)} J</p>
-            <p>Energy (TNT): ${data.impact_energy_tnt.toFixed(4)} tons TNT</p>
-            <p>Lost energy: ${data.lost_energy.toFixed(2)} J</p>
-            <p>Mass to space: ${data.percent_to_space.toFixed(2)}%</p>
-            <p>Equivalent to ${data.impact_energy_hiroshima.toFixed(3)} Hiroshima bombs</p>
-          `;
-        }
+        setImpactEnergy(data.impact_energy);
+        const energySpan = document.getElementById("energyValue");
+        energySpan.textContent = `${data.impact_energy.toFixed(4)} J`;
+        const energyTNTSpan = document.getElementById("energyTNTValue");
+        energyTNTSpan.textContent = `${data.impact_energy_tnt.toFixed(4)} TNT tons`;
+        const energyLossSpan = document.getElementById("energyLostValue");
+        energyLossSpan.textContent = `${data.lost_energy.toFixed(4)} J`;
+        const percentToSpaceSpan = document.getElementById("massSpaceValue");
+        percentToSpaceSpan.textContent = `${data.percent_to_space.toFixed(2)}%`;
+        const hiroshimaSpan = document.getElementById("hiroshimaValue");
+        hiroshimaSpan.textContent = `${data.impact_energy_hiroshima.toFixed(3)} H-bombs`;
+
         // remove previous
         if (curMeteorMeshRef.current) {
           scene.remove(curMeteorMeshRef.current);
@@ -715,26 +723,35 @@ export default function MeteorDisplay() {
         {/* Bottom: Simulation Info / Results */}
         <div
           id="simulationResults"
-          className="flex-1 p-4 mt-1 bg-gray-700 rounded-lg overflow-auto text-sm"
+          className="flex-1 p-4 bg-gray-700 rounded-lg overflow-auto text-sm overflow-x-hidden"
         >
-          <p className="text-center text-gray-400">Simulation info will appear here</p>
+          <div className="text-center text-gray-400">
+            <p className="font-semibold text-lg">Simulation Results</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-gray-300">
+            <div className="flex flex-col items-start">
+              <p>Energy: <span id="energyValue"></span></p>
+              <p>Energy (TNT): <span id="energyTNTValue"></span></p>
+              <p>Energy lost: <span id="energyLostValue"></span></p>
+              <p>Mass to space: <span id="massSpaceValue"></span></p>
+              <p>Equivalent to: <span id="hiroshimaValue"></span></p>
+            </div>
+          </div>
         </div>
-
-        {/* Buttons */}
-        <div>
+        <div className="flex flex-row gap-4 h-16">
           <div className="flex gap-4 mt-4">
             <button
               onClick={handleResetClick}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300 text-center"
             >
-              Reset View
+              <p className="m-0 text-sm">Reset View</p>
             </button>
           </div>
 
           <div className="flex gap-4 mt-4">
             <Link
-              to={`/impact-damage?lat=${latitudeRef.current}&lon=${longitudeRef.current}&energy=${impactEnergyRef.current}`}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
+              to={`/impact-damage?lat=${latitude}&lon=${longitude}&energy=${impactEnergy}`}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300 text-center"
             >
               <p>Damage on Impact</p>
             </Link>
