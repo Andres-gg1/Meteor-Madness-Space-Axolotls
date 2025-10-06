@@ -54,6 +54,8 @@ function calculateJoulesToMegatons(energyJ) {
   // Convert energy from Joules (J) to megatons (Mt).
   // 1 Mt of TNT ≈ 4.184e15 Joules.
   const energyMt = energyJ / 4.184e15;
+  alert(energyMt);
+  alert(energyJ); 
   return energyMt.toFixed(2);
 }
 
@@ -114,7 +116,8 @@ function getParamsFromURL() {
   const latitude = parseFloat(params.get("latitude") || params.get("lat"));
   const longitude = parseFloat(params.get("longitude") || params.get("lon"));
   const baseData = {
-    energy_mt: calculateJoulesToMegatons(parseFloat(params.get("energy"))),
+    // Use the energy parameter directly as megatons (Mt)
+    energy_mt: parseFloat(params.get("energy")),
     latitude,
     longitude,
   };
@@ -323,7 +326,7 @@ const ImpactMap = () => {
         <b>Name:</b> {impact.name}<br />
         <b>Size:</b> {impact.size_m} m<br />
         <b>Class:</b> {impact.class}<br />
-        <b>Energy:</b> {impact.energy_mt} Mt<br />
+        <b>Energy:</b> {Number(impact.energy_mt).toFixed(2)} Mt<br />
         <b>Global Changes:</b> {impact.global_changes}<br />
         <b>Atmospheric Entry:</b> {impact.atmospheric_entry}
       </>
@@ -370,7 +373,7 @@ const ImpactMap = () => {
               <Tooltip direction="top" offset={[0, -10]} opacity={1} permanent>
                 <div style={{ fontSize: '12px' }}>
                   <b>{impactType}</b><br />
-                  <span className="font-bold text-orange-300">{impact.energy_mt} Mt</span> megatons<br />
+                  <span className="font-bold text-orange-300">{Number(impact.energy_mt).toFixed(2)} Mt</span> megatons<br />
                   Name: Dummy meteor
                 </div>
               </Tooltip>

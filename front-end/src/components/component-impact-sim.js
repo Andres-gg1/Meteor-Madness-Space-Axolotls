@@ -566,9 +566,11 @@ setLongitude(lon);
       energyLostValue.textContent = "0 J";
       massSpaceValue.textContent = "0%";
       hiroshimaValue.textContent = "0 H-bombs";
-      setLatitude(0);
-      setLongitude(0);
-      setImpactEnergy(0);
+  setLatitude(0);
+  setLongitude(0);
+  setImpactEnergy(0);
+  // clear mitigation info
+  setMitigationInfo(null);
 
       // camera smooth reset
       const startPos = camera.position.clone();
@@ -660,6 +662,19 @@ setLongitude(lon);
       scene.remove(meteorLightRef.current);
       meteorLightRef.current = null;
     }
+
+    // clear result displays
+    try {
+      document.getElementById("energyValue").textContent = "0 J";
+      document.getElementById("energyTNTValue").textContent = "0 TNT tons";
+      document.getElementById("energyLostValue").textContent = "0 J";
+      document.getElementById("massSpaceValue").textContent = "0%";
+      document.getElementById("hiroshimaValue").textContent = "0 H-bombs";
+    } catch (e) {}
+    setLatitude(0);
+    setLongitude(0);
+    setImpactEnergy(0);
+    setMitigationInfo(null);
 
     // camera reset tween
     const startPos = camera.position.clone();
