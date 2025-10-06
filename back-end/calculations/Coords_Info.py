@@ -5,7 +5,6 @@ from math import radians, cos, sin, asin, sqrt
 from dotenv import load_dotenv
 from time import sleep
 
-# Load environment variables
 load_dotenv()
 
 CITIES_FILE = "cities_filtered.csv"
@@ -13,45 +12,29 @@ MIN_POPULATION = 400_000
 SOILGRIDS_URL = "https://rest.isric.org/soilgrids/v2.0/properties/query"
 DEPTH_RANGES = ['0-5cm', '5-15cm', '15-30cm', '30-60cm', '60-100cm', '100-200cm']
 
-# Google Maps API Key from environment variable
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 if not GOOGLE_MAPS_API_KEY:
     raise ValueError("GOOGLE_MAPS_API_KEY not found in environment variables. Please check your .env file.")
 
-# Geographical boundaries
 GREENLAND_BOUNDS = {'lat_min': 59.0, 'lat_max': 84.0, 'lon_min': -75.0, 'lon_max': -10.0}
 ANTARCTICA_BOUNDS = {'lat_min': -90.0, 'lat_max': -60.0, 'lon_min': -180.0, 'lon_max': 180.0}
 
 def validate_coordinates(lat, lon):
-    """Validate that coordinates are within valid ranges."""
     if not (-90 <= lat <= 90):
         raise ValueError(f"Latitude {lat} must be between -90 and 90 degrees")
     if not (-180 <= lon <= 180):
         raise ValueError(f"Longitude {lon} must be between -180 and 180 degrees")
 
-# Haversine distance (km)
 def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
     dlon = lon2 - lon1
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    return 6371 * 2 * asin(sqrt(a))  # km
+    return 6371 * 2 * asin(sqrt(a))
 
 def is_water(lat, lon, debug=False):
-    """
-    Check if coordinates are over water using Google Maps Elevation API.
-    Water is at sea level (0m) or below.
-    
-    Args:
-        lat (float): Latitude
-        lon (float): Longitude
-        debug (bool): Enable debug prints
-    
-    Returns:
-        bool or None: True if water, False if land, None if can't determine
-    """
     validate_coordinates(lat, lon)
-    retries = 3  # Number of retries for failed API calls
+    retries = 3
 
     for attempt in range(retries):
         try:
@@ -80,8 +63,7 @@ def is_water(lat, lon, debug=False):
                         print(f"Google Elevation API - Elevation: {elevation} meters")
                         print(f"Google Elevation API - Resolution: {resolution} meters")
 
-                    # Water is at sea level (0m) or very close to it
-                    if elevation <= 1:  # Allow 1m tolerance for sea level
+                    if elevation <= 1:
                         if debug:
                             print(f"Google Elevation API - Detected as WATER (elevation <= 1m)")
                         return True
@@ -105,31 +87,24 @@ def is_water(lat, lon, debug=False):
         except requests.RequestException as e:
             if debug:
                 print(f"Request error in water detection (attempt {attempt + 1}): {e}")
-            if attempt == retries - 1:  # Last attempt
+            if attempt == retries - 1:
                 return None
         except Exception as e:
             if debug:
                 print(f"Error in water detection (attempt {attempt + 1}): {e}")
-            if attempt == retries - 1:  # Last attempt
+            if attempt == retries - 1:
                 return None
 
 def is_greenland(lat, lon):
-    """Check if coordinates fall within Greenland's boundaries."""
     validate_coordinates(lat, lon)
     return (GREENLAND_BOUNDS['lat_min'] <= lat <= GREENLAND_BOUNDS['lat_max'] and
             GREENLAND_BOUNDS['lon_min'] <= lon <= GREENLAND_BOUNDS['lon_max'])
 
 def is_antarctica(lat, lon):
-    """Check if coordinates fall within Antarctica's boundaries."""
     validate_coordinates(lat, lon)
     return lat <= ANTARCTICA_BOUNDS['lat_max']
 
-# Determine location type
 def get_location_type(lat, lon):
-    """
-    Determine if coordinates are in water, Greenland, Antarctica, or regular land.
-    Returns: 'water', 'greenland', 'antarctica', or 'land'
-    """
     if is_antarctica(lat, lon):
         return 'antarctica'
     
@@ -142,19 +117,13 @@ def get_location_type(lat, lon):
     elif water_check is False:
         return 'land'
     else:
-        # If we can't determine from the API, assume it's land
         return 'land'
 
 def nearby_cities(lat, lon, radius_km=None):
-    """Find nearby large cities within specified radius."""
     validate_coordinates(lat, lon)
     
     current_dir = os.path.dirname(__file__)
-
-    # Ruta a la carpeta padre
     parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
-
-    # Ruta completa al archivo cities_filtered.csv
     CITIES_FILE = os.path.join(parent_dir, "cities_filtered.csv")
 
     if not os.path.exists(CITIES_FILE):
@@ -166,14 +135,13 @@ def nearby_cities(lat, lon, radius_km=None):
             reader = csv.reader(f)
             for row_num, parts in enumerate(reader, 1):
                 try:
-                    if len(parts) < 15:  # Ensure we have enough columns
+                    if len(parts) < 15:
                         continue
                     name = parts[1]
                     city_lat = float(parts[4])
                     city_lon = float(parts[5])
                     population = int(parts[14].replace(",", ""))
                 except (ValueError, IndexError) as e:
-                    # Skip malformed rows
                     continue
 
                 if population < MIN_POPULATION:
@@ -189,12 +157,10 @@ def nearby_cities(lat, lon, radius_km=None):
     if radius_km is None:
         return [name for name, _ in cities_with_distance]
     else:
-        # Only return cities inside the given radius. If none, return empty list.
         return [name for name, dist in cities_with_distance if dist <= radius_km]
 
 
 def soil_bulk_density(lat, lon):
-    """Get soil bulk density from SoilGrids API."""
     validate_coordinates(lat, lon)
 
     densities = {}
@@ -206,7 +172,7 @@ def soil_bulk_density(lat, lon):
                 sleep(0.5)
                 continue
 
-            response.raise_for_status()  # Raise exception for bad status codes
+            response.raise_for_status()
 
             data = response.json()
             if 'properties' in data and 'layers' in data['properties']:
@@ -215,7 +181,8 @@ def soil_bulk_density(lat, lon):
                         for d in layer.get('depths', []):
                             mean_val = d['values'].get('mean')
                             if mean_val is not None:
-                                densities[d['label']] = mean_val / 100
+                                # SoilGrids returns cg/cm³: divide by 100 -> g/cm³, multiply by 1000 -> kg/m³
+                                densities[d['label']] = mean_val * 10
         except requests.RequestException as e:
             print(f"Error fetching soil data for depth {depth}: {e}")
             densities[depth] = None
@@ -224,30 +191,28 @@ def soil_bulk_density(lat, lon):
             densities[depth] = None
     return densities
 
-# Main function: return appropriate density based on location type
 def get_density(lat, lon, radius_km=5, debug=False):
-    # Primero, determinamos el tipo de ubicación
+    """Returns density in kg/m³ for all depth ranges"""
     location_type = get_location_type(lat, lon)
     
     if location_type == 'water':
         if debug: print(f"Location is over water (ocean, sea, lake, etc.)")
-        return {depth: None for depth in DEPTH_RANGES}  # No soil density for water
+        return {depth: None for depth in DEPTH_RANGES}
     
     elif location_type == 'antarctica':
         if debug: print(f"Location is in Antarctica")
-        return {depth: 0.9 for depth in DEPTH_RANGES}  # Ice density
+        return {depth: 900 for depth in DEPTH_RANGES}  # kg/m³
     
     elif location_type == 'greenland':
         if debug: print(f"Location is in Greenland")
-        return {depth: 0.9 for depth in DEPTH_RANGES}  # Ice density
+        return {depth: 900 for depth in DEPTH_RANGES}  # kg/m³
     
-    else:  # land
+    else:
         cities = nearby_cities(lat, lon, radius_km)
         if cities:
             if debug: print(f"Location within city: {cities[0]}")
-            return {depth: 2.65 for depth in DEPTH_RANGES}  # urban bulk density
+            return {depth: 2650 for depth in DEPTH_RANGES}  # kg/m³
         
-        # Verificar elevación antes de consultar SoilGrids
         elevation = None
         try:
             url = "https://maps.googleapis.com/maps/api/elevation/json"
@@ -256,26 +221,23 @@ def get_density(lat, lon, radius_km=5, debug=False):
             if response.status_code == 200:
                 data = response.json()
                 if data.get('status') == 'OK' and data.get('results'):
-                    elevation = data['results'][0]['elevation']  # en metros
+                    elevation = data['results'][0]['elevation']
         except Exception as e:
             if debug: print(f"Error fetching elevation: {e}")
         
-        if elevation is not None and elevation >= 3000:  # Montañas altas
+        if elevation is not None and elevation >= 3000:
             if debug: print(f"High elevation ({elevation} m), using mountain/rock density")
-            return {depth: 2.0 for depth in DEPTH_RANGES}  # densidad típica de roca
+            return {depth: 2000 for depth in DEPTH_RANGES}  # kg/m³
         
-        # Rural normal, consulta SoilGrids
         if debug: print("Rural location or no nearby large city, querying SoilGrids...")
         densities = soil_bulk_density(lat, lon)
         
-        # Si SoilGrids no devolvió nada, usar valor genérico
         if not any(densities.values()):
             if debug: print("SoilGrids returned no data, using default soil density")
-            return {depth: 1.3 for depth in DEPTH_RANGES}  # densidad genérica de suelo
+            return {depth: 1300 for depth in DEPTH_RANGES}  # kg/m³
         
         return densities
 
-# --- Examples ---
 if __name__ == '__main__':
     
     (lat, lon) = (20.677561150261983, -103.4128081509739)
