@@ -140,7 +140,7 @@ export default function MeteorSimulation() {
         const velocity = opts.velocity || 0.0007;
         const diameter = opts.diameter || 1000;
         const mass = opts.mass || 1000;
-        const angle = opts.pitchDeg || 0;
+        const angle = opts.pitchDeg || 90;
         const latitude = 90 - (Math.acos(collisionPoint.y / collisionPoint.length()) * 180) / Math.PI;
         const longitude = ((Math.atan2(collisionPoint.z, collisionPoint.x) * 180) / Math.PI + 180) % 360 - 180;
         const response = await fetch(
@@ -670,7 +670,7 @@ export default function MeteorSimulation() {
 
             <div className="flex flex-col gap-0.5">
               <label>
-                Initial Velocity: <span id="velValue">0.0007</span>
+                Initial Velocity: <span id="velValue">40</span> m/s
               </label>
               <input
                 type="range"
