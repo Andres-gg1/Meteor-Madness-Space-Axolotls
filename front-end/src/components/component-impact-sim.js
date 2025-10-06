@@ -150,14 +150,44 @@ export default function MeteorDisplay() {
         const diameter = opts.diameter || 1000;
         const mass = opts.mass * 1000 || 1000;
         const angle = 90;
-        const latitude = 90 - (Math.acos(collisionPoint.y / collisionPoint.length()) * 180) / Math.PI;
-        const longitude = ((Math.atan2(collisionPoint.z, collisionPoint.x) * 180) / Math.PI + 180) % 360 - 180;
+        const tilt = 23.4 * Math.PI / 180;
 
-        setLatitude(latitude);
-        setLongitude(longitude);
+        const earthRotation = earthMesh.rotation.y;
+
+// Clone and transform the collision point
+const corrected = collisionPoint.clone();
+
+// Undo the Earth's tilt to get to standard orientation
+corrected.applyAxisAngle(new THREE.Vector3(0, 0, 1), tilt);
+
+// Calculate latitude
+const lat = 90 - (Math.acos(corrected.y / corrected.length()) * 180 / Math.PI);
+
+// Calculate longitude
+// In Three.js: X+ is right, Z+ is towards viewer, Y+ is up
+// Standard map: 0° lon at prime meridian, positive east, negative west
+// At rotation.y = 0, your texture shows prime meridian facing +Z direction
+let lon = Math.atan2(corrected.x, corrected.z) * 180 / Math.PI;
+
+// Adjust for Earth's current rotation (rotation is counterclockwise when viewed from above)
+lon = lon - (earthRotation * 180 / Math.PI);
+
+// Add texture offset if needed (some Earth textures have prime meridian at different UV coordinates)
+// Adjust this value if coordinates are consistently off by a fixed amount
+const textureOffset = 90; // Try -90, 0, 90, or 180 if needed
+lon = lon + textureOffset;
+
+// Normalize longitude to -180 to 180 range
+while (lon > 180) lon -= 360;
+while (lon < -180) lon += 360;
+
+console.log(`Calculated coordinates: Lat ${lat.toFixed(2)}°, Lon ${lon.toFixed(2)}°`);
+
+setLatitude(lat);
+setLongitude(lon);  
 
         const response = await fetch(
-          `${URL}/impact?velocity=${velocity}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${latitude}&longitude=${longitude}`
+          `${URL}/impact?velocity=${velocity}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${lat}&longitude=${lon}`
         );
         if (!response.ok) throw new Error("API request failed");
 
