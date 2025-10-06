@@ -52,66 +52,56 @@ def calculate_pressure_hpa(altitude_meters):
     # Calculate temperature at the given altitude
     T_h = T_b + lapse * (altitude_meters - h_b)
     
-    # Calculate pressure based on the type of layer (isothermal or with lapse rate)
-    if abs(lapse) < 1e-10:  # Isothermal layer (lapse rate ≈ 0)
-        # Formula for isothermal layer: P = P_b * exp(-g*M*(h-h_b)/(R*T_b))
+    if abs(lapse) < 1e-10:
         P_h = P_b * np.exp(-g * M * (altitude_meters - h_b) / (R * T_b))
     else:
-        # Formula for layer with lapse rate: P = P_b * (T_h/T_b)^(-g*M/(R*lapse))
         P_h = P_b * (T_h / T_b) ** (-g * M / (R * lapse))
     
-    # For very high altitudes (>100km), use a simplified exponential model
     if altitude_meters > 100000:
-        scale_height = 7000  # Approximate scale height (m)
+        scale_height = 7000
         P_h = 0.00373 * np.exp(-((altitude_meters - 84852) / scale_height))
     
-    return max(P_h, 1e-6)  # Avoid negative or extremely small values
+    return max(P_h, 1e-6)
 
 def calculate_air_density(altitude_meters, temperature_offset=0, humidity=0):
-    # Get pressure in hPa and convert to Pa
-    P_hpa = calculate_pressure_hpa(altitude_meters)
-    P_pa = P_hpa * 100  # 1 hPa = 100 Pa
+    """
+    Calculate air density at given altitude.
     
-    # Definition of atmospheric layers for temperature calculation
+    Returns: Air density in kg/m³
+    """
+    P_hpa = calculate_pressure_hpa(altitude_meters)
+    P_pa = P_hpa * 100
+    
     layers = [
-        [0,      288.15,   -0.0065],  # Troposphere
-        [11000,  216.65,    0.0],     # Stratosphere 1
-        [20000,  216.65,    0.001],   # Stratosphere 2
-        [32000,  228.65,    0.0028],  # Stratosphere 3
-        [47000,  270.65,    0.0],     # Stratopause
-        [51000,  270.65,   -0.0028],  # Mesosphere 1
-        [71000,  214.65,   -0.002],   # Mesosphere 2
-        [84852,  186.95,    0.0],     # Mesopause
+        [0,      288.15,   -0.0065],
+        [11000,  216.65,    0.0],
+        [20000,  216.65,    0.001],
+        [32000,  228.65,    0.0028],
+        [47000,  270.65,    0.0],
+        [51000,  270.65,   -0.0028],
+        [71000,  214.65,   -0.002],
+        [84852,  186.95,    0.0],
     ]
     
-    # Find the atmospheric layer to determine the base temperature
     layer = None
     for i, layer_data in enumerate(layers):
         if i == len(layers) - 1 or altitude_meters < layers[i+1][0]:
             layer = layer_data
             break
     
-    # Extract layer data
-    h_b = layer[0]      # Base altitude of the layer (m)
-    T_b = layer[1]      # Base temperature of the layer (K)
-    lapse = layer[2]    # Temperature lapse rate (K/m)
+    h_b = layer[0]
+    T_b = layer[1]
+    lapse = layer[2]
     
-    # Calculate standard temperature at the given altitude
     T_h = T_b + lapse * (altitude_meters - h_b)
-    
-    # Apply temperature offset (if any)
     T_actual = T_h + temperature_offset
     
-    # Humidity correction factor (simple approximation)
-    # Water vapor is less dense than dry air
     humidity_factor = 1.0 - 0.06 * humidity
     
-    # Calculate density using the ideal gas law: ρ = P/(R_specific*T)
-    R_specific = R / M  # Specific gas constant for air (J/(kg·K))
+    R_specific = R / M
     rho = (P_pa / (R_specific * T_actual)) * humidity_factor
     
-    # For extreme altitudes, use a minimum value to avoid absolute zero
-    if altitude_meters > 150000:  # Beyond 150 km
+    if altitude_meters > 150000:
         return 1e-10
     
-    return max(rho, 1e-10)  # Avoid negative or extremely small values
+    return max(rho, 1e-10)
