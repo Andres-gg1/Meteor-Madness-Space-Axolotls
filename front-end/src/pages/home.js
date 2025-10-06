@@ -4,6 +4,7 @@ import  meteorite  from '../assets/meteorite-2.png';
 import meteorImpact from '../assets/meteor-impact.jpeg';
 import orbitSim from '../assets/orbit-simulation.jpeg';
 import { Link } from 'react-router-dom';
+import MeteorDisplay  from '../components/basic-impact'
 
 function Home() {
 
@@ -25,7 +26,7 @@ function Home() {
           <Meteors number={60} className='overflow-hidden'/>
           <div className="relative z-10 flex h-full gap-20 items-center">
             {/* Left Column */}
-            <div className="flex-1 flex-col items-center justify-center self-baseline ml-14 mt-14 pl-14 mb-6">
+            <div className="flex-1 flex-col items-center justify-center self-baseline ml-0 mt-14 pl-14 mb-6">
               <span className="pointer-events-none bg-gradient-to-b from-white to-indigo-800 bg-clip-text text-center text-9xl leading-none font-bebas whitespace-pre-wrap text-transparent">
                 METEOR
                 <br />
@@ -38,14 +39,54 @@ function Home() {
             </div>
             
             {/* Right Column */}
-            <div className="flex-1 flex items-center justify-center">
-              <img 
-                src={meteorite} 
-                alt="Meteor image" 
-                className="w-auto -rotate-19 object-contain rounded-lg justify-center align-center items-center content-center pr-[5rem] mr-[5rem]"
-              />
+            <div className="flex-1 flex items-center justify-center h-[36rem]">
+              <MeteorDisplay></MeteorDisplay>
             </div>
           </div>
+        </div>
+
+        {/* Cards Section */}
+        <div className="mt-8 flex flex-row w-full h-[24rem] gap-6 px-20 pb-20">
+          {/* Simulate Impact Card */}
+          <Link
+            to="/simulate"
+            className="relative h-full w-full rounded-3xl overflow-hidden group hover:scale-[1.02] transition duration-300 cursor-pointer 
+                      hover:shadow-[0_0_50px_20px_rgba(99,102,241,0.7)]"
+          >
+            <img 
+              src={meteorImpact} 
+              alt="Meteor background" 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-300"></div>
+            <div className="absolute bottom-6 right-6 text-right z-10">
+              <span className="pointer-events-none bg-gradient-to-b from-white to-stone-400 bg-clip-text text-7xl leading-none font-bebas whitespace-pre-wrap text-transparent drop-shadow-lg">
+                SIMULATE
+                <br/>
+                IMPACT
+              </span>
+            </div>
+          </Link>
+
+          {/* Watch Meteorites Card */}
+            <Link
+              to="/watch"
+              className="relative h-full w-full rounded-3xl overflow-hidden group hover:scale-[1.02] transition duration-300 cursor-pointer 
+                        hover:shadow-[0_0_50px_20px_rgba(139,92,246,0.7)]"
+            >
+              <img 
+                src={orbitSim} 
+                alt="Impact background" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute bottom-6 right-6 text-right z-10">
+                <span className="pointer-events-none bg-gradient-to-b from-white to-stone-400 bg-clip-text text-7xl leading-none font-bebas whitespace-pre-wrap text-transparent drop-shadow-lg">
+                  WATCH
+                  <br/>
+                  METEORITES
+                </span>
+              </div>
+            </Link>
         </div>
 
         {/* Team Section */}
@@ -76,50 +117,7 @@ function Home() {
           </div>
         </div>
 
-        {/* Cards Section */}
-        <div className="mt-8 flex flex-row w-full h-[24rem] gap-6 px-20 pb-20">
-          {/* Simulate Impact Card */}
-          <Link
-            to="/simulate"
-            className="relative h-full w-full rounded-3xl overflow-hidden group hover:scale-[1.02] transition duration-300 cursor-pointer 
-                      hover:shadow-[0_0_50px_20px_rgba(99,102,241,0.7)]"
-          >
-            <img 
-              src={meteorImpact} 
-              alt="Meteor background" 
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-300"></div>
-            <div className="absolute bottom-6 right-6 text-right z-10">
-              <span className="pointer-events-none bg-gradient-to-b from-white to-stone-400 bg-clip-text text-7xl leading-none font-bebas whitespace-pre-wrap text-transparent drop-shadow-lg">
-                SIMULATE
-                <br/>
-                IMPACT
-              </span>
-            </div>
-          </Link>
-
-          {/* Watch Meteorites Card */}
-          <Link
-            to="/watch"
-            className="relative h-full w-full rounded-3xl overflow-hidden group hover:scale-[1.02] transition duration-300 cursor-pointer 
-                      hover:shadow-[0_0_50px_20px_rgba(139,92,246,0.7)]"
-          >
-            <img 
-              src={orbitSim} 
-              alt="Impact background" 
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-300"></div>
-            <div className="absolute bottom-6 right-6 text-right z-10">
-              <span className="pointer-events-none bg-gradient-to-b from-white to-stone-400 bg-clip-text text-7xl leading-none font-bebas whitespace-pre-wrap text-transparent drop-shadow-lg">
-                WATCH
-                <br/>
-                METEORITES
-              </span>
-            </div>
-          </Link>
-        </div>
+        
       </div>  
     </div>
   );
