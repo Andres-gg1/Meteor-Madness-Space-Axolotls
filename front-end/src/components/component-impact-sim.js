@@ -22,6 +22,7 @@ export default function MeteorDisplay() {
   const [latitude, setLatitude] = useState(0);
   const [longitude, setLongitude] = useState(0);
   const [impactEnergy, setImpactEnergy] = useState(0);
+  const [mitigationInfo, setMitigationInfo] = useState(null);
 
   useEffect(() => {
     const container = containerRef.current || document.body;
@@ -206,6 +207,22 @@ setLongitude(lon);
         percentToSpaceSpan.textContent = `${data.percent_to_space.toFixed(2)}%`;
         const hiroshimaSpan = document.getElementById("hiroshimaValue");
         hiroshimaSpan.textContent = `${data.impact_energy_hiroshima.toFixed(3)} H-bombs`;
+
+        // Fetch mitigation info (safe distance, fragmentation energy)
+        try {
+          const mitResp = await fetch(
+            `${URL}/mitigation?velocity=${velocity*1000000}&mass=${mass}&diameter=${diameter}`
+          );
+          if (mitResp.ok) {
+            const mit = await mitResp.json();
+            setMitigationInfo(mit);
+          } else {
+            setMitigationInfo(null);
+          }
+        } catch (e) {
+          console.error('Mitigation API error', e);
+          setMitigationInfo(null);
+        }
 
         // remove previous
         if (curMeteorMeshRef.current) {
@@ -782,6 +799,7 @@ setLongitude(lon);
             </div>
           </div>
         </div>
+        
         <div className="flex flex-row gap-4 h-16">
           <div className="flex gap-4 mt-4">
             <button
@@ -801,6 +819,35 @@ setLongitude(lon);
             </Link>
           </div>
         </div>
+      </div>
+      {/* Fixed bottom-left info badge */}
+      <div
+        style={{
+          position: "fixed",
+          left: 12,
+          bottom: 12,
+          background: "rgba(0,0,0,0.7)",
+          color: "#fff",
+          padding: "10px 14px",
+          borderRadius: 8,
+          fontSize: 12,
+          zIndex: 9999,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+          minWidth: 220,
+        }}
+      >
+        <div style={{fontWeight:600, marginBottom:6}}>Impact Mitigation (quick info)</div>
+        {mitigationInfo ? (
+          <div style={{lineHeight:1.3}}>
+            <div>Can be mitigated? <strong>{mitigationInfo.fragmentation_energy < impactEnergy ? 'Yes' : 'No'}</strong></div>
+            <div>Safe distance: <strong>{(mitigationInfo.safe_distance/1000).toFixed(1)} km</strong></div>
+            <div>Mitigation energy: <strong>{Number(mitigationInfo.fragmentation_energy).toExponential(3)} J</strong></div>
+            <div>Equivalent (TNT tons): <strong>{Number(mitigationInfo.fragmentation_energy_tnt).toFixed(3)}</strong></div>
+            <div>Equivalent (H-bombs): <strong>{Number(mitigationInfo.fragmentation_energy_hiroshima).toExponential(2)}</strong></div>
+          </div>
+        ) : (
+          <div>Tip: Click the Earth to launch a meteor. Use the sliders to adjust diameter, velocity and mass.</div>
+        )}
       </div>
     </div>
   );
