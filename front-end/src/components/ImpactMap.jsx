@@ -7,6 +7,7 @@ import * as turf from '@turf/turf';
 import "leaflet.heat"; 
 import { useParams } from 'react-router-dom';
 
+// Leaflet marker setup
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -41,8 +42,11 @@ function calculateImpactMagnitude(energyMt) {
   // 1 Mt of TNT ≈ 4.184e15 Joules.
   const energyJ = energyMt * 4.184e15;
   
+  // Empirical formula (derived from Gutenberg-Richter relation) 
+  // to approximate the seismic magnitude equivalent.
   const magnitude = (2 / 3) * Math.log10(energyJ) - 3.2;
-
+  
+  // Return the magnitude formatted to two decimal places.
   return magnitude.toFixed(2);
 }
 
@@ -50,6 +54,8 @@ function calculateJoulesToMegatons(energyJ) {
   // Convert energy from Joules (J) to megatons (Mt).
   // 1 Mt of TNT ≈ 4.184e15 Joules.
   const energyMt = energyJ / 4.184e15;
+  alert(energyMt);
+  alert(energyJ); 
   return energyMt.toFixed(2);
 }
 
@@ -95,18 +101,30 @@ const coastalZones = [
   { id: 'shockwave', radius: 40, description: "Shockwave from near-shore explosion.", color: 'orange' },
 ];
 
+
+
+// -----------------------------
+// Dummy Impact Data
+// -----------------------------
+// ------------------------------------------------
+// Dummy Impact Data Generator (auto zone selection)
+// ------------------------------------------------
+
 function getParamsFromURL() {
   const params = new URLSearchParams(window.location.search);
   // Support both lat/lon and latitude/longitude
   const latitude = parseFloat(params.get("latitude") || params.get("lat"));
   const longitude = parseFloat(params.get("longitude") || params.get("lon"));
   const baseData = {
-    energy_mt: calculateJoulesToMegatons(parseFloat(params.get("energy"))),
+    // Use the energy parameter directly as megatons (Mt)
+    energy_mt: parseFloat(params.get("energy")),
     latitude,
     longitude,
   };
   return baseData;
 }
+
+
 
 // -----------------------------
 // Info Panel Helper
@@ -148,6 +166,7 @@ const HeatmapLayer = ({ points = [] }) => {
 // -----------------------------
 // MAIN COMPONENT
 // -----------------------------
+
 const ImpactMap = () => {
   const [impact, setImpact] = useState(null);
   const [cities, setCities] = useState([]);
@@ -169,9 +188,10 @@ const ImpactMap = () => {
   useEffect(() => {
     if (!landGeoJson) return;
 
+  // Get baseData first
   const baseData = getParamsFromURL();
-  const latitude = baseData.latitude || 0; 
-  const longitude = baseData.longitude || 0;
+  const latitude = baseData.latitude || 0; // Default latitude if not provided
+  const longitude = baseData.longitude || 0; // Default longitude if not provided
 
   const point = turf.point([longitude, latitude]);
 
@@ -237,7 +257,7 @@ const ImpactMap = () => {
   
 
   // ------------------------------------------------
-  // Fetch cities and earthquakes once impact is known
+  // 3️⃣ Fetch cities and earthquakes once impact is known
   // ------------------------------------------------
 
   useEffect(() => {
@@ -245,6 +265,7 @@ const ImpactMap = () => {
 
     const maxRadius = Math.max(...impact.zones.map(z => z.radius));
 
+    // Fetch nearby cities (legacy, for heatmap)
     fetch(`http://localhost:5000/api/cities?lat=${impact.latitude}&lon=${impact.longitude}&radius=${maxRadius}`)
       .then(res => res.json())
       .then(cityData => {
@@ -272,11 +293,13 @@ const ImpactMap = () => {
       })
       .catch(err => console.error("Error loading city data:", err));
 
+    // Fetch evacuation plan from backend
     fetch(`http://localhost:5000/api/evacuation-plan?energy_mt=${impact.energy_mt}&latitude=${impact.latitude}&longitude=${impact.longitude}`)
       .then(res => res.json())
       .then(data => setEvacPlan(data))
       .catch(err => console.error("Error loading evacuation plan:", err));
 
+    // Fetch historical earthquakes near the area
     const magnitude = calculateImpactMagnitude(impact.energy_mt);
     fetchSimilarEarthquakes(impact.latitude, impact.longitude, magnitude)
       .then(eq => setEarthquakes(eq));
@@ -455,6 +478,7 @@ const ImpactMap = () => {
   );
 }
 
+// NASA Standard Evacuation Instructions for each zone (example, can be expanded)
 const ZONE_EVAC_GUIDELINES = {
   crater: {
     title: "Crater Zone",
@@ -496,7 +520,7 @@ const ZONE_EVAC_GUIDELINES = {
 
 function EvacuationPlanPanel({ evacPlan, zones }) {
   const [openZone, setOpenZone] = React.useState(null);
-
+  // Group cities by zone
   const zoneCityMap = {};
   evacPlan.evacuation_order.forEach(city => {
     if (!zoneCityMap[city.zone]) zoneCityMap[city.zone] = [];
