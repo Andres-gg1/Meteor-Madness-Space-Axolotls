@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import * as turf from '@turf/turf';
 import "leaflet.heat"; 
+import {URL} from '../App.js';
 
 // Leaflet marker setup
 delete L.Icon.Default.prototype._getIconUrl;
@@ -242,7 +243,7 @@ const ImpactMap = () => {
     const maxRadius = Math.max(...impact.zones.map(z => z.radius));
 
     // Fetch nearby cities
-    fetch(`http://localhost:5000/api/cities?lat=${impact.latitude}&lon=${impact.longitude}&radius=${maxRadius}`)
+    fetch(`${URL}/api/cities?lat=${impact.latitude}&lon=${impact.longitude}&radius=${maxRadius}`)
       .then(res => res.json())
       .then(cityData => {
         setCities(cityData);
