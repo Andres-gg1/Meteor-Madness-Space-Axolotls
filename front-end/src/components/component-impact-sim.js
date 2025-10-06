@@ -187,7 +187,7 @@ setLatitude(lat);
 setLongitude(lon);  
 
         const response = await fetch(
-          `${URL}/impact?velocity=${velocity}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${lat}&longitude=${lon}`
+          `${URL}/impact?velocity=${velocity*1000000}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${lat}&longitude=${lon}`
         );
         if (!response.ok) throw new Error("API request failed");
 
@@ -539,6 +539,19 @@ setLongitude(lon);
         scene.remove(meteorLightRef.current);
         meteorLightRef.current = null;
       }
+      const energyValue = document.getElementById("energyValue");
+      const energyTNTValue = document.getElementById("energyTNTValue");
+      const energyLostValue = document.getElementById("energyLostValue");
+      const massSpaceValue = document.getElementById("massSpaceValue");
+      const hiroshimaValue = document.getElementById("hiroshimaValue");
+      energyValue.textContent = "0 J";
+      energyTNTValue.textContent = "0 TNT tons";
+      energyLostValue.textContent = "0 J";
+      massSpaceValue.textContent = "0%";
+      hiroshimaValue.textContent = "0 H-bombs";
+      setLatitude(0);
+      setLongitude(0);
+      setImpactEnergy(0);
 
       // camera smooth reset
       const startPos = camera.position.clone();
@@ -695,7 +708,7 @@ setLongitude(lon);
                 min="0"
                 max="50"
                 step="1"
-                defaultValue="50"
+                defaultValue="40"
                 onChange={(e) => (document.getElementById("zoomValue").innerText = e.target.value)}
               />
             </div>

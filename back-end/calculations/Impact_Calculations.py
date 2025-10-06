@@ -28,7 +28,10 @@ class ImpactCalculations:
             diameter: meters
             velocity: m/s
         """
-        return (ImpactCalculations.gravity * diameter) / math.pow(velocity, 2)
+        # Prevent division by zero - minimum velocity for meaningful impact
+        min_velocity = 1.0  # m/s - below this, no significant crater forms
+        effective_velocity = max(velocity, min_velocity)
+        return (ImpactCalculations.gravity * diameter) / math.pow(effective_velocity, 2)
 
     @staticmethod
     def calculateInitialCraterDiameter(asteroid_diameter, asteroid_density_kg_m3, asteroid_velocity, ground_density_kg_m3): 
