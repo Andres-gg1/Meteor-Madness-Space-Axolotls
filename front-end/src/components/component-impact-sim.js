@@ -2,6 +2,7 @@ import { Diameter } from "lucide-react";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { Link } from "react-router-dom";
 
 export default function MeteorSimulation() {
   const containerRef = useRef(null);
@@ -13,6 +14,9 @@ export default function MeteorSimulation() {
   const meteorLightRef = useRef(null);
   const rotationRef = useRef(true);
   const texturesRef = useRef([]);
+  const latitudeRef = useRef(0);
+  const longitudeRef = useRef(0);
+  const impactEnergyRef = useRef(0);
 
   useEffect(() => {
     const container = containerRef.current || document.body;
@@ -142,7 +146,9 @@ export default function MeteorSimulation() {
         const mass = opts.mass * 1000 || 1000;
         const angle = 90;
         const latitude = 90 - (Math.acos(collisionPoint.y / collisionPoint.length()) * 180) / Math.PI;
+        latitudeRef.current = latitude;
         const longitude = ((Math.atan2(collisionPoint.z, collisionPoint.x) * 180) / Math.PI + 180) % 360 - 180;
+        longitudeRef.current = longitude;
         const response = await fetch(
           `http://127.0.0.1:5000/impact?velocity=${velocity}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${latitude}&longitude=${longitude}`
         );
@@ -152,6 +158,7 @@ export default function MeteorSimulation() {
 
         // update your simulation results panel
         const resultsDiv = document.getElementById("simulationResults");
+        impactEnergyRef.current = data.impact_energy;
         if (resultsDiv) {
           resultsDiv.innerHTML = `
             <p>Impact energy: ${data.impact_energy.toFixed(2)} J</p>
@@ -714,16 +721,26 @@ export default function MeteorSimulation() {
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-4 mt-4">
-          <button
-            onClick={handleResetClick}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
-          >
-            Reset View
-          </button>
+        <div>
+          <div className="flex gap-4 mt-4">
+            <button
+              onClick={handleResetClick}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
+            >
+              Reset View
+            </button>
+          </div>
+
+          <div className="flex gap-4 mt-4">
+            <Link
+              to={`/impact-damage?lat=${latitudeRef.current}&lon=${longitudeRef.current}&energy=${impactEnergyRef.current}`}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
+            >
+              <p>Damage on Impact</p>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
-
   );
 }

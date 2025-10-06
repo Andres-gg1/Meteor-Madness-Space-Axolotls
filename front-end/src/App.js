@@ -10,6 +10,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/watch" element={<WatchMeteorites />} />
         <Route path="/simulate" element={<SimulateImpact />} />
+        <Route path="/simulate/impact-damage" element={<ImpactDamage />} />
       </Routes>
     </Router>
   );
