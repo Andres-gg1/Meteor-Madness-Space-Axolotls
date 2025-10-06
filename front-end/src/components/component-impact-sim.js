@@ -736,7 +736,7 @@ setLongitude(lon);
 
               <div className="flex flex-col gap-1">
                 <label>
-                  Mass: <span id="massValue">1000000000000</span>
+                  Mass: <span id="massValue">1000000000</span> kg
                 </label>
                 <input
                   type="range"
@@ -759,7 +759,7 @@ setLongitude(lon);
           <div className="text-center text-gray-400">
             <p className="font-semibold text-lg">Simulation Results</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-gray-300">
+          <div className="gap-2 text-gray-300">
             <div className="flex flex-col items-start">
               <p>Energy: <span id="energyValue"></span></p>
               <p>Energy (TNT): <span id="energyTNTValue"></span></p>
