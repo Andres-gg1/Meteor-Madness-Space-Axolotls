@@ -1,9 +1,10 @@
-import { Diameter } from "lucide-react";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { Link } from "react-router-dom";
 
-export default function MeteorSimulation() {
+
+export default function MeteorDisplay() {
   const containerRef = useRef(null);
 
   const sceneRef = useRef(null);
@@ -13,6 +14,9 @@ export default function MeteorSimulation() {
   const meteorLightRef = useRef(null);
   const rotationRef = useRef(true);
   const texturesRef = useRef([]);
+  const latitudeRef = useRef(0);
+  const longitudeRef = useRef(0);
+  const impactEnergyRef = useRef(0);
 
   useEffect(() => {
     const container = containerRef.current || document.body;
@@ -60,9 +64,9 @@ export default function MeteorSimulation() {
     const geometryAtmos = new THREE.SphereGeometry(1.03, Math.max(8, detail ** 2));
 
     // materials + meshes (store loaded textures)
-    const dayTex = trackTexture(loader.load("./textures/8k_earth_daymap.jpg"));
-    const specTex = trackTexture(loader.load("./textures/earthspec1k.jpg"));
-    const bumpTex = trackTexture(loader.load("./textures/earthbump1k.jpg"));
+    const dayTex = trackTexture(loader.load("/textures/8k_earth_daymap.jpg"));
+    const specTex = trackTexture(loader.load("/textures/earthspec1k.jpg"));
+    const bumpTex = trackTexture(loader.load("/textures/earthbump1k.jpg"));
 
     const material = new THREE.MeshPhongMaterial({
       map: loader.load("/three-textures/8k_earth_daymap.jpg"),
@@ -73,7 +77,7 @@ export default function MeteorSimulation() {
     const earthMesh = new THREE.Mesh(geometry, material);
     earthGroup.add(earthMesh);
 
-    const nightTex = trackTexture(loader.load("./textures/8k_earth_nightmap.jpg"));
+    const nightTex = trackTexture(loader.load("/textures/8k_earth_nightmap.jpg"));
     const lightsMat = new THREE.MeshBasicMaterial({
       map: loader.load("/three-textures/8k_earth_nightmap.jpg"),
       blending: THREE.AdditiveBlending,
@@ -81,7 +85,7 @@ export default function MeteorSimulation() {
     const lightsMesh = new THREE.Mesh(geometry.clone(), lightsMat);
     earthGroup.add(lightsMesh);
 
-    const cloudTex = trackTexture(loader.load("./textures/8k_earth_clouds.jpg"));
+    const cloudTex = trackTexture(loader.load("/textures/8k_earth_clouds.jpg"));
     const cloudMat = new THREE.MeshStandardMaterial({
       map: loader.load("/three-textures/8k_earth_clouds.jpg"),
       blending: THREE.AdditiveBlending
@@ -142,7 +146,9 @@ export default function MeteorSimulation() {
         const mass = opts.mass * 1000 || 1000;
         const angle = 90;
         const latitude = 90 - (Math.acos(collisionPoint.y / collisionPoint.length()) * 180) / Math.PI;
+        latitudeRef.current = latitude;
         const longitude = ((Math.atan2(collisionPoint.z, collisionPoint.x) * 180) / Math.PI + 180) % 360 - 180;
+        longitudeRef.current = longitude;
         const response = await fetch(
           `http://127.0.0.1:5000/impact?velocity=${velocity}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${latitude}&longitude=${longitude}`
         );
@@ -152,6 +158,7 @@ export default function MeteorSimulation() {
 
         // update your simulation results panel
         const resultsDiv = document.getElementById("simulationResults");
+        impactEnergyRef.current = data.impact_energy;
         if (resultsDiv) {
           resultsDiv.innerHTML = `
             <p>Impact energy: ${data.impact_energy.toFixed(2)} J</p>
@@ -170,7 +177,7 @@ export default function MeteorSimulation() {
 
         const meteorRadiusMeters = opts.diameter / 2;
         const geometryMeteor = new THREE.IcosahedronGeometry(meteorRadiusMeters / 6371000, 3);
-        const meteorTex = trackTexture(loader.load("./textures/meteor_texture.jpg"));
+        const meteorTex = trackTexture(loader.load("/textures/meteor_texture.jpg"));
         const materialMeteor = new THREE.MeshStandardMaterial({
           map: loader.load("/three-textures/meteor_texture.jpg"),
           emissive: 0xffff50,
@@ -219,7 +226,7 @@ export default function MeteorSimulation() {
         meteorMesh.trail = trail;
 
         // burn texture
-        const burnTex = trackTexture(loader.load("./textures/burn_glow.png"));
+        const burnTex = trackTexture(loader.load("/textures/burn_glow.png"));
         const burnMaterial = new THREE.MeshStandardMaterial({
           map: burnTex,
           color: 0xff9933,
@@ -714,16 +721,26 @@ export default function MeteorSimulation() {
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-4 mt-4">
-          <button
-            onClick={handleResetClick}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
-          >
-            Reset View
-          </button>
+        <div>
+          <div className="flex gap-4 mt-4">
+            <button
+              onClick={handleResetClick}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
+            >
+              Reset View
+            </button>
+          </div>
+
+          <div className="flex gap-4 mt-4">
+            <Link
+              to={`/impact-damage?lat=${latitudeRef.current}&lon=${longitudeRef.current}&energy=${impactEnergyRef.current}`}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition duration-300"
+            >
+              <p>Damage on Impact</p>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
-
   );
 }
