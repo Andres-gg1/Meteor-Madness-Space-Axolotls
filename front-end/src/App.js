@@ -3,6 +3,7 @@ import Home from './pages/home';
 import WatchMeteorites from './pages/orbit-sim';
 import SimulateImpact from './pages/impact-sim';
 import ImpactMap from './components/ImpactMap.jsx';
+import SimulateImpact2D from './pages/impact-sim_2D.js';
 
 function App() {
   return (
@@ -12,9 +13,7 @@ function App() {
         <Route path="/watch" element={<WatchMeteorites />} />
         <Route path="/simulate" element={<SimulateImpact />} />
         <Route path="/impact-damage" element={<ImpactMap />} />
-=======
-        <Route path="/simulate/impact-damage" element={<ImpactDamage />} />
->>>>>>> 81f613b383a2e34f231b97800063f03be0727e4b
+        <Route path="/simulate/impact-damage" element={<SimulateImpact2D />} />
       </Routes>
     </Router>
   );
