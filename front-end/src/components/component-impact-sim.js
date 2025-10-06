@@ -2,6 +2,7 @@ import { useEffect, useRef, useState} from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Link } from "react-router-dom";
+import {URL} from '../App.js';
 
 
 export default function MeteorDisplay() {
@@ -156,7 +157,7 @@ export default function MeteorDisplay() {
         setLongitude(longitude);
 
         const response = await fetch(
-          `http://127.0.0.1:5000/impact?velocity=${velocity}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${latitude}&longitude=${longitude}`
+          `${URL}/impact?velocity=${velocity}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${latitude}&longitude=${longitude}`
         );
         if (!response.ok) throw new Error("API request failed");
 
