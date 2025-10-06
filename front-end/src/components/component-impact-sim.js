@@ -139,8 +139,8 @@ export default function MeteorSimulation() {
       try {
         const velocity = opts.velocity || 0.0007;
         const diameter = opts.diameter || 1000;
-        const mass = opts.mass || 1000;
-        const angle = opts.pitchDeg || 90;
+        const mass = opts.mass * 1000 || 1000;
+        const angle = 90;
         const latitude = 90 - (Math.acos(collisionPoint.y / collisionPoint.length()) * 180) / Math.PI;
         const longitude = ((Math.atan2(collisionPoint.z, collisionPoint.x) * 180) / Math.PI + 180) % 360 - 180;
         const response = await fetch(
@@ -670,14 +670,14 @@ export default function MeteorSimulation() {
 
             <div className="flex flex-col gap-0.5">
               <label>
-                Initial Velocity: <span id="velValue">40</span> m/s
+                Initial Velocity: <span id="velValue">40000</span> m/s
               </label>
               <input
                 type="range"
-                min="10"
-                max="70"
-                step="1"
-                defaultValue="40"
+                min="10000"
+                max="70000"
+                step="100"
+                defaultValue="40000"
                 onChange={(e) => (document.getElementById("velValue").innerText = e.target.value)}
               />
             </div>
@@ -690,14 +690,14 @@ export default function MeteorSimulation() {
 
               <div className="flex flex-col gap-1">
                 <label>
-                  Mass: <span id="massValue">1</span>
+                  Mass: <span id="massValue">1000000000000</span>
                 </label>
                 <input
                   type="range"
-                  min="0.01"
-                  max="5"
-                  step="0.01"
-                  defaultValue="1"
+                  min="1000000000"
+                  max="1000000000000000"
+                  step="1000000000"
+                  defaultValue="1000000000000"
                   onChange={(e) => (document.getElementById("massValue").innerText = e.target.value)}
                 />
               </div>
