@@ -22,6 +22,7 @@ export default function MeteorDisplay() {
   const [latitude, setLatitude] = useState(0);
   const [longitude, setLongitude] = useState(0);
   const [impactEnergy, setImpactEnergy] = useState(0);
+  const [mitigationInfo, setMitigationInfo] = useState(null);
 
   useEffect(() => {
     const container = containerRef.current || document.body;
@@ -150,14 +151,44 @@ export default function MeteorDisplay() {
         const diameter = opts.diameter || 1000;
         const mass = opts.mass * 1000 || 1000;
         const angle = 90;
-        const latitude = 90 - (Math.acos(collisionPoint.y / collisionPoint.length()) * 180) / Math.PI;
-        const longitude = ((Math.atan2(collisionPoint.z, collisionPoint.x) * 180) / Math.PI + 180) % 360 - 180;
+        const tilt = 23.4 * Math.PI / 180;
 
-        setLatitude(latitude);
-        setLongitude(longitude);
+        const earthRotation = earthMesh.rotation.y;
+
+// Clone and transform the collision point
+const corrected = collisionPoint.clone();
+
+// Undo the Earth's tilt to get to standard orientation
+corrected.applyAxisAngle(new THREE.Vector3(0, 0, 1), tilt);
+
+// Calculate latitude
+const lat = 90 - (Math.acos(corrected.y / corrected.length()) * 180 / Math.PI);
+
+// Calculate longitude
+// In Three.js: X+ is right, Z+ is towards viewer, Y+ is up
+// Standard map: 0° lon at prime meridian, positive east, negative west
+// At rotation.y = 0, your texture shows prime meridian facing +Z direction
+let lon = Math.atan2(corrected.x, corrected.z) * 180 / Math.PI;
+
+// Adjust for Earth's current rotation (rotation is counterclockwise when viewed from above)
+lon = lon - (earthRotation * 180 / Math.PI);
+
+// Add texture offset if needed (some Earth textures have prime meridian at different UV coordinates)
+// Adjust this value if coordinates are consistently off by a fixed amount
+const textureOffset = 90; // Try -90, 0, 90, or 180 if needed
+lon = lon + textureOffset;
+
+// Normalize longitude to -180 to 180 range
+while (lon > 180) lon -= 360;
+while (lon < -180) lon += 360;
+
+console.log(`Calculated coordinates: Lat ${lat.toFixed(2)}°, Lon ${lon.toFixed(2)}°`);
+
+setLatitude(lat);
+setLongitude(lon);  
 
         const response = await fetch(
-          `${URL}/impact?velocity=${velocity}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${latitude}&longitude=${longitude}`
+          `${URL}/impact?velocity=${velocity*1000000}&mass=${mass}&diameter=${diameter}&angle=${angle}&latitude=${lat}&longitude=${lon}`
         );
         if (!response.ok) throw new Error("API request failed");
 
@@ -176,6 +207,22 @@ export default function MeteorDisplay() {
         percentToSpaceSpan.textContent = `${data.percent_to_space.toFixed(2)}%`;
         const hiroshimaSpan = document.getElementById("hiroshimaValue");
         hiroshimaSpan.textContent = `${data.impact_energy_hiroshima.toFixed(3)} H-bombs`;
+
+        // Fetch mitigation info (safe distance, fragmentation energy)
+        try {
+          const mitResp = await fetch(
+            `${URL}/mitigation?velocity=${velocity*1000000}&mass=${mass}&diameter=${diameter}`
+          );
+          if (mitResp.ok) {
+            const mit = await mitResp.json();
+            setMitigationInfo(mit);
+          } else {
+            setMitigationInfo(null);
+          }
+        } catch (e) {
+          console.error('Mitigation API error', e);
+          setMitigationInfo(null);
+        }
 
         // remove previous
         if (curMeteorMeshRef.current) {
@@ -333,7 +380,7 @@ export default function MeteorDisplay() {
             const offset = 0.013;
             const lightPos = meteorMesh.position.clone().add(dirFromEarth.clone().multiplyScalar(offset));
             meteorLightRef.current.position.copy(lightPos);
-            meteorLightRef.current.intensity = opts.diameter > 5000 ? 0.5 : opts.diameter > 2000 ? 0.25 : 0.1;
+            meteorLightRef.current.intensity = opts.diameter > 5000 ? 0.3 : opts.diameter > 2000 ? 0.2 : 0.1;
           }
 
           // update trail
@@ -509,6 +556,19 @@ export default function MeteorDisplay() {
         scene.remove(meteorLightRef.current);
         meteorLightRef.current = null;
       }
+      const energyValue = document.getElementById("energyValue");
+      const energyTNTValue = document.getElementById("energyTNTValue");
+      const energyLostValue = document.getElementById("energyLostValue");
+      const massSpaceValue = document.getElementById("massSpaceValue");
+      const hiroshimaValue = document.getElementById("hiroshimaValue");
+      energyValue.textContent = "0 J";
+      energyTNTValue.textContent = "0 TNT tons";
+      energyLostValue.textContent = "0 J";
+      massSpaceValue.textContent = "0%";
+      hiroshimaValue.textContent = "0 H-bombs";
+      setLatitude(0);
+      setLongitude(0);
+      setImpactEnergy(0);
 
       // camera smooth reset
       const startPos = camera.position.clone();
@@ -665,7 +725,7 @@ export default function MeteorDisplay() {
                 min="0"
                 max="50"
                 step="1"
-                defaultValue="50"
+                defaultValue="40"
                 onChange={(e) => (document.getElementById("zoomValue").innerText = e.target.value)}
               />
             </div>
@@ -706,7 +766,7 @@ export default function MeteorDisplay() {
 
               <div className="flex flex-col gap-1">
                 <label>
-                  Mass: <span id="massValue">1000000000000</span>
+                  Mass: <span id="massValue">1000000000</span> kg
                 </label>
                 <input
                   type="range"
@@ -724,12 +784,12 @@ export default function MeteorDisplay() {
         {/* Bottom: Simulation Info / Results */}
         <div
           id="simulationResults"
-          className="flex-1 p-4 bg-gray-700 rounded-lg overflow-auto text-sm overflow-x-hidden"
+          className="flex-1 p-4 pt-2 bg-gray-700 rounded-lg overflow-auto text-sm overflow-x-hidden"
         >
           <div className="text-center text-gray-400">
             <p className="font-semibold text-lg">Simulation Results</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-gray-300">
+          <div className="gap-2 text-gray-300">
             <div className="flex flex-col items-start">
               <p>Energy: <span id="energyValue"></span></p>
               <p>Energy (TNT): <span id="energyTNTValue"></span></p>
@@ -739,6 +799,7 @@ export default function MeteorDisplay() {
             </div>
           </div>
         </div>
+        
         <div className="flex flex-row gap-4 h-16">
           <div className="flex gap-4 mt-4">
             <button
@@ -758,6 +819,35 @@ export default function MeteorDisplay() {
             </Link>
           </div>
         </div>
+      </div>
+      {/* Fixed bottom-left info badge */}
+      <div
+        style={{
+          position: "fixed",
+          left: 12,
+          bottom: 12,
+          background: "rgba(0,0,0,0.7)",
+          color: "#fff",
+          padding: "10px 14px",
+          borderRadius: 8,
+          fontSize: 12,
+          zIndex: 9999,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+          minWidth: 220,
+        }}
+      >
+        <div style={{fontWeight:600, marginBottom:6}}>Impact Mitigation (quick info)</div>
+        {mitigationInfo ? (
+          <div style={{lineHeight:1.3}}>
+            <div>Can be mitigated? <strong>{mitigationInfo.fragmentation_energy < impactEnergy ? 'Yes' : 'No'}</strong></div>
+            <div>Safe distance: <strong>{(mitigationInfo.safe_distance/1000).toFixed(1)} km</strong></div>
+            <div>Mitigation energy: <strong>{Number(mitigationInfo.fragmentation_energy).toExponential(3)} J</strong></div>
+            <div>Equivalent (TNT tons): <strong>{Number(mitigationInfo.fragmentation_energy_tnt).toFixed(3)}</strong></div>
+            <div>Equivalent (H-bombs): <strong>{Number(mitigationInfo.fragmentation_energy_hiroshima).toExponential(2)}</strong></div>
+          </div>
+        ) : (
+          <div>Tip: Click the Earth to launch a meteor. Use the sliders to adjust diameter, velocity and mass.</div>
+        )}
       </div>
     </div>
   );
