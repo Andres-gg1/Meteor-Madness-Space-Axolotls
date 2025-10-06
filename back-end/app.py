@@ -19,6 +19,7 @@ API_KEY = os.getenv('NASA_API_KEY')
 if not API_KEY:
     raise ValueError("NASA_API_KEY not found in environment variables. Please check your .env file.")
 
+
 # --------------------- Evacuation Plan Endpoint --------------------- #
 from calculations.Coords_Info import get_location_type
 import heapq
@@ -42,6 +43,8 @@ def evacuation_plan():
         terrain_type = 'coastal'  # fallback, you can improve this logic
 
     # 2. Define zones by terrain
+        terrain_type = 'coastal'
+
     def scale(radius):
         return radius * (energy_mt / 10) ** (1/3)
 
@@ -117,14 +120,32 @@ def impact():
     angle = float(request.args.get('angle'))
     latitude = float(request.args.get('latitude'))
     longitude = float(request.args.get('longitude'))
+    print(f"[DEBUG] Received parameters: velocity={velocity}, mass={mass}, diameter={diameter}, angle={angle}, latitude={latitude}, longitude={longitude}")
 
-    (final_energy, final_velocity, final_mass, lost_energy, percent_lost) = simulate_meteor_atmospheric_entry(diameter, velocity, angle)
+    if velocity < 1000 or velocity > 100000:
+        return jsonify({
+            'error': 'The received velocity is unrealistic. Make sure it is in m/s (example: 40000 for 40 km/s).',
+            'velocity_received': velocity
+        }), 400
 
-    asteroid_density = (mass / ((4/3) * math.pi * (diameter/2)**3)) / 1000  # Convert to g/cm³
-    ground_density = get_density(latitude, longitude)  # g/cm³
+    asteroid_density = mass / ((4/3) * math.pi * (diameter/2)**3)
+    ground_density_dict = get_density(latitude, longitude)
 
-    init_crater_diameter = ImpactCalculations.calculateInitialCraterDiameter(diameter, asteroid_density, velocity, ground_density['100-200cm'])
-    excavated_mass = ImpactCalculations.calculateExcavatedMass(init_crater_diameter, ground_density['100-200cm'])
+    last_depth = max(ground_density_dict.keys(), key=lambda x: int(x.split('-')[0]))
+    ground_density = ground_density_dict[last_depth]
+
+    final_energy, final_velocity, final_mass, lost_energy, percent_lost = simulate_meteor_atmospheric_entry(diameter, velocity, angle, asteroid_density)
+
+    if final_velocity < 1.0:
+        return jsonify({
+            'result': 'disintegrated',
+            'message': 'The meteorite disintegrated in the atmosphere and did not impact the ground.',
+            'final_velocity': final_velocity
+        })
+
+    crater_velocity = final_velocity
+    init_crater_diameter = ImpactCalculations.calculateInitialCraterDiameter(diameter, asteroid_density, crater_velocity, ground_density)
+    excavated_mass = ImpactCalculations.calculateExcavatedMass(init_crater_diameter, ground_density)
     minimal_ejection_velocity = ImpactCalculations.calculateMinimalEjectionVelocity(init_crater_diameter)
     percent_to_space = ImpactCalculations.calculateMassToEscapeGravity(minimal_ejection_velocity, excavated_mass)
 
@@ -134,6 +155,9 @@ def impact():
         'lost_energy': lost_energy,
         'impact_energy_tnt': PropertiesCalculations.convertJoulesTNTTons(final_energy),
         'impact_energy_hiroshima': PropertiesCalculations.convertJoulesHiroshima(final_energy),
+        'final_velocity': final_velocity,
+        'crater_velocity_used': crater_velocity,
+        'velocity_warning': 'false'
     })
 
 @app.route('/mitigation', methods=['GET'])
@@ -196,7 +220,6 @@ def get_orbital_data(asteroid_id, target_date_str):
     y_final_path = (x_rot2 * np.sin(omega) + y_rot2 * np.cos(omega)).tolist()
     z_final_path = z_rot2.tolist()
 
-    # Current position
     M0 = np.deg2rad(float(orbital_data['mean_anomaly']))
     n = np.deg2rad(float(orbital_data['mean_motion']))
     t0 = datetime.strptime(orbital_data['orbit_determination_date'], '%Y-%m-%d %H:%M:%S')
@@ -204,9 +227,8 @@ def get_orbital_data(asteroid_id, target_date_str):
     delta_t = (t - t0).total_seconds() / 86400.0
     M = M0 + n * delta_t
 
-    # Solve Kepler's equation iteratively
     E = M
-    for _ in range(20):  # más iteraciones
+    for _ in range(20): 
         E_next = M + e * np.sin(E)
         if abs(E_next - E) < 1e-6:
             break
@@ -389,6 +411,7 @@ def asteroid_details():
 
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
+
 
 # --------------------- Run Server --------------------- #
 if __name__ == '__main__':
