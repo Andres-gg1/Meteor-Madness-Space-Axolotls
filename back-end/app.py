@@ -2,18 +2,24 @@ from calculations.Coords_Info import get_density
 from calculations.Energy_Atm import simulate_meteor_atmospheric_entry
 from calculations.Impact_Calculations import ImpactCalculations
 from calculations.Properties_Calculations import PropertiesCalculations
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import json, math, requests, os, numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
+import os
+import mimetypes
 
 
 # Load environment variables
 load_dotenv()
 
-app = Flask(__name__)
+mimetypes.add_type('application/javascript', '.js')
+mimetypes.add_type('text/css', '.css')
+
+app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)
+
 
 API_KEY = os.getenv('NASA_API_KEY')
 if not API_KEY:
@@ -43,6 +49,8 @@ def evacuation_plan():
         terrain_type = 'coastal'  # fallback, you can improve this logic
 
     # 2. Define zones by terrain
+        terrain_type = 'coastal'
+
     def scale(radius):
         return radius * (energy_mt / 10) ** (1/3)
 
@@ -109,10 +117,20 @@ def evacuation_plan():
         'zones': zone_output,
         'evacuation_order': evac_list
     })
+@app.route('/static/<path:filename>')
+def serve_static_files(filename):
+    """Serve React's static files from the nested static/static directory"""
+    return send_from_directory(os.path.join(app.static_folder, 'static'), filename)
+
+@app.route('/three-textures/<path:filename>')
+def serve_textures(filename):
+    """Serve three.js textures"""
+    return send_from_directory(os.path.join(app.static_folder, 'three-textures'), filename)
+
+
 # --------------------- Impact Route --------------------- #
 @app.route('/impact', methods=['GET'])
 def impact():
-    # Get parameters and log for debugging
     velocity = float(request.args.get('velocity'))
     mass = float(request.args.get('mass'))
     diameter = float(request.args.get('diameter'))
@@ -121,25 +139,20 @@ def impact():
     longitude = float(request.args.get('longitude'))
     print(f"[DEBUG] Received parameters: velocity={velocity}, mass={mass}, diameter={diameter}, angle={angle}, latitude={latitude}, longitude={longitude}")
 
-    # Validate velocity range (expected: 10,000 to 70,000 m/s)
     if velocity < 1000 or velocity > 100000:
         return jsonify({
             'error': 'The received velocity is unrealistic. Make sure it is in m/s (example: 40000 for 40 km/s).',
             'velocity_received': velocity
         }), 400
 
-    # Calculate densities first
     asteroid_density = mass / ((4/3) * math.pi * (diameter/2)**3)
     ground_density_dict = get_density(latitude, longitude)
 
-    # Get the last valid depth value (in kg/m³)
     last_depth = max(ground_density_dict.keys(), key=lambda x: int(x.split('-')[0]))
     ground_density = ground_density_dict[last_depth]
 
-    # Simulate atmospheric entry with correct density
     final_energy, final_velocity, final_mass, lost_energy, percent_lost = simulate_meteor_atmospheric_entry(diameter, velocity, angle, asteroid_density)
 
-    # If the final velocity is very low, it disintegrates
     if final_velocity < 1.0:
         return jsonify({
             'result': 'disintegrated',
@@ -147,7 +160,6 @@ def impact():
             'final_velocity': final_velocity
         })
 
-    # Impact calculations using final velocity after atmospheric entry
     crater_velocity = final_velocity
     init_crater_diameter = ImpactCalculations.calculateInitialCraterDiameter(diameter, asteroid_density, crater_velocity, ground_density)
     excavated_mass = ImpactCalculations.calculateExcavatedMass(init_crater_diameter, ground_density)
@@ -225,7 +237,6 @@ def get_orbital_data(asteroid_id, target_date_str):
     y_final_path = (x_rot2 * np.sin(omega) + y_rot2 * np.cos(omega)).tolist()
     z_final_path = z_rot2.tolist()
 
-    # Current position
     M0 = np.deg2rad(float(orbital_data['mean_anomaly']))
     n = np.deg2rad(float(orbital_data['mean_motion']))
     t0 = datetime.strptime(orbital_data['orbit_determination_date'], '%Y-%m-%d %H:%M:%S')
@@ -233,9 +244,8 @@ def get_orbital_data(asteroid_id, target_date_str):
     delta_t = (t - t0).total_seconds() / 86400.0
     M = M0 + n * delta_t
 
-    # Solve Kepler's equation iteratively
     E = M
-    for _ in range(20):  # más iteraciones
+    for _ in range(20): 
         E_next = M + e * np.sin(E)
         if abs(E_next - E) < 1e-6:
             break
@@ -419,8 +429,15 @@ def asteroid_details():
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    """Serve React app - catch all other routes"""
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, 'index.html')
 
 # --------------------- Run Server --------------------- #
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run()
      
