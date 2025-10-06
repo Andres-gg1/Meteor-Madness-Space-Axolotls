@@ -10,10 +10,10 @@ function Home() {
 
   const teamMembers = [
   { name: "Andres Garcia", avatar: "👨‍🚀" },
-  { name: "Zahid Aguirre", avatar: "👩‍💻" },
-  { name: "Fernando Gonzalez", avatar: "👨‍🔬" },
+  { name: "Zahid Aguirre", avatar: "👨‍💻" },
+  { name: "Fernando Gonzalez", avatar: "👨‍💻" },
   { name: "Angel Reynoso", avatar: "👩‍🚀" },
-  { name: "Itzel Ximena", avatar: "👩‍🚀" },
+  { name: "Itzel Ximena", avatar: "👩‍💻" },
   { name: "Alvaro Nuñez", avatar: "👩‍🚀" },
 ];
 
