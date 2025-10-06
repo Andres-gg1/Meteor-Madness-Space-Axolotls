@@ -8,6 +8,8 @@ import json, math, requests, os, numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
 
+
+# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
@@ -31,12 +33,16 @@ def evacuation_plan():
     except (TypeError, ValueError):
         return jsonify({'error': 'Missing or invalid energy_mt, latitude, or longitude'}), 400
 
+    # 1. Detect terrain type
     terrain = get_location_type(lat, lon)
     if terrain == 'water':
         terrain_type = 'ocean'
     elif terrain == 'land':
         terrain_type = 'land'
     else:
+        terrain_type = 'coastal'  # fallback, you can improve this logic
+
+    # 2. Define zones by terrain
         terrain_type = 'coastal'
 
     def scale(radius):
@@ -65,6 +71,7 @@ def evacuation_plan():
     else:
         zones = water_zones
 
+    # 3. For each zone, get affected cities
     all_cities = {}
     for zone in zones:
         resp = app.test_client().get(f"/api/cities?lat={lat}&lon={lon}&radius={zone['radius']}")
@@ -83,11 +90,13 @@ def evacuation_plan():
                         'zone': zone['id']
                     }
 
+    # 4. Sort by evacuation priority: closest, then largest population
     evac_list = list(all_cities.values())
     evac_list.sort(key=lambda c: (c['distance'], -c['population']))
     for i, city in enumerate(evac_list):
         city['order'] = i + 1
 
+    # 5. Group by zone for output
     zone_output = []
     for zone in zones:
         zone_cities = [c for c in evac_list if c['zone'] == zone['id']]
