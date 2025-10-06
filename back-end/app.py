@@ -8,6 +8,7 @@ import json, math, requests, os, numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
 
+
 # Load environment variables
 load_dotenv()
 
@@ -18,6 +19,95 @@ API_KEY = os.getenv('NASA_API_KEY')
 if not API_KEY:
     raise ValueError("NASA_API_KEY not found in environment variables. Please check your .env file.")
 
+# --------------------- Evacuation Plan Endpoint --------------------- #
+from calculations.Coords_Info import get_location_type
+import heapq
+
+@app.route('/api/evacuation-plan', methods=['GET'])
+def evacuation_plan():
+    try:
+        energy_mt = float(request.args.get('energy_mt'))
+        lat = float(request.args.get('latitude'))
+        lon = float(request.args.get('longitude'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Missing or invalid energy_mt, latitude, or longitude'}), 400
+
+    # 1. Detect terrain type
+    terrain = get_location_type(lat, lon)
+    if terrain == 'water':
+        terrain_type = 'ocean'
+    elif terrain == 'land':
+        terrain_type = 'land'
+    else:
+        terrain_type = 'coastal'  # fallback, you can improve this logic
+
+    # 2. Define zones by terrain
+    def scale(radius):
+        return radius * (energy_mt / 10) ** (1/3)
+
+    land_zones = [
+        {"id": 'crater', "radius": scale(3)},
+        {"id": 'thermal', "radius": scale(25)},
+        {"id": 'airblast', "radius": scale(60)},
+        {"id": 'ejecta', "radius": scale(120)},
+        {"id": 'seismic', "radius": scale(200)},
+    ]
+    water_zones = [
+        {"id": 'tsunami', "radius": scale(300)},
+        {"id": 'vapor_cloud', "radius": scale(80)},
+    ]
+    coastal_zones = [
+        {"id": 'mixed_wave', "radius": scale(150)},
+        {"id": 'shockwave', "radius": scale(40)},
+    ]
+
+    if terrain_type == 'land':
+        zones = land_zones
+    elif terrain_type == 'coastal':
+        zones = coastal_zones
+    else:
+        zones = water_zones
+
+    # 3. For each zone, get affected cities
+    all_cities = {}
+    for zone in zones:
+        resp = app.test_client().get(f"/api/cities?lat={lat}&lon={lon}&radius={zone['radius']}")
+        if resp.status_code == 200:
+            cities = resp.get_json()
+            for city in cities:
+                city_id = city['id']
+                dist = haversine_distance(lat, lon, city['latitude'], city['longitude'])
+                if city_id not in all_cities or dist < all_cities[city_id]['distance']:
+                    all_cities[city_id] = {
+                        'name': city['name'],
+                        'latitude': city['latitude'],
+                        'longitude': city['longitude'],
+                        'population': city['population'],
+                        'distance': dist,
+                        'zone': zone['id']
+                    }
+
+    # 4. Sort by evacuation priority: closest, then largest population
+    evac_list = list(all_cities.values())
+    evac_list.sort(key=lambda c: (c['distance'], -c['population']))
+    for i, city in enumerate(evac_list):
+        city['order'] = i + 1
+
+    # 5. Group by zone for output
+    zone_output = []
+    for zone in zones:
+        zone_cities = [c for c in evac_list if c['zone'] == zone['id']]
+        zone_output.append({
+            'id': zone['id'],
+            'radius': zone['radius'],
+            'cities': zone_cities
+        })
+
+    return jsonify({
+        'terrain': terrain_type,
+        'zones': zone_output,
+        'evacuation_order': evac_list
+    })
 # --------------------- Impact Route --------------------- #
 @app.route('/impact', methods=['GET'])
 def impact():
