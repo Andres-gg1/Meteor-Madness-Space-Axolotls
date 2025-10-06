@@ -363,7 +363,7 @@ setLongitude(lon);
             const offset = 0.013;
             const lightPos = meteorMesh.position.clone().add(dirFromEarth.clone().multiplyScalar(offset));
             meteorLightRef.current.position.copy(lightPos);
-            meteorLightRef.current.intensity = opts.diameter > 5000 ? 0.5 : opts.diameter > 2000 ? 0.25 : 0.1;
+            meteorLightRef.current.intensity = opts.diameter > 5000 ? 0.3 : opts.diameter > 2000 ? 0.2 : 0.1;
           }
 
           // update trail
@@ -754,7 +754,7 @@ setLongitude(lon);
         {/* Bottom: Simulation Info / Results */}
         <div
           id="simulationResults"
-          className="flex-1 p-4 bg-gray-700 rounded-lg overflow-auto text-sm overflow-x-hidden"
+          className="flex-1 p-4 pt-2 bg-gray-700 rounded-lg overflow-auto text-sm overflow-x-hidden"
         >
           <div className="text-center text-gray-400">
             <p className="font-semibold text-lg">Simulation Results</p>
