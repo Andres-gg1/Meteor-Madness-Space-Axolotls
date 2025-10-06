@@ -1,5 +1,5 @@
 import numpy as np
-from calculations.Air_Calculations import calculate_air_density
+from calculations.Air_Calculations import air_density
 
 g = 9.81
 rho_rock = 3000  # kg/m³
@@ -37,10 +37,10 @@ def simulate_meteor_atmospheric_entry(diameter_m, velocity_m_s, entry_angle_deg,
     h = initial_altitude_m
 
     while h > 0:
-        rho_air = calculate_air_density(h)
+        rho_air = air_density(h)
         Fd = 0.5 * rho_air * Cd * A * v**2
         delta_s = step_m / np.sin(theta)
-        v = np.sqrt(max(v**2 + 2 * g * np.sin(theta) * delta_s - 2 * Fd * delta_s / mass, 0))
+        v = np.sqrt(max(v**2 - 2 * Fd * delta_s / mass, 0))
         h -= step_m
 
     Ek_initial = 0.5 * mass * velocity_m_s**2

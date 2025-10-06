@@ -8,6 +8,7 @@ import json, math, requests, os, numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
 
+
 # Load environment variables
 load_dotenv()
 
@@ -18,23 +19,138 @@ API_KEY = os.getenv('NASA_API_KEY')
 if not API_KEY:
     raise ValueError("NASA_API_KEY not found in environment variables. Please check your .env file.")
 
+
+# --------------------- Evacuation Plan Endpoint --------------------- #
+from calculations.Coords_Info import get_location_type
+import heapq
+
+@app.route('/api/evacuation-plan', methods=['GET'])
+def evacuation_plan():
+    try:
+        energy_mt = float(request.args.get('energy_mt'))
+        lat = float(request.args.get('latitude'))
+        lon = float(request.args.get('longitude'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Missing or invalid energy_mt, latitude, or longitude'}), 400
+
+    # 1. Detect terrain type
+    terrain = get_location_type(lat, lon)
+    if terrain == 'water':
+        terrain_type = 'ocean'
+    elif terrain == 'land':
+        terrain_type = 'land'
+    else:
+        terrain_type = 'coastal'  # fallback, you can improve this logic
+
+    # 2. Define zones by terrain
+    def scale(radius):
+        return radius * (energy_mt / 10) ** (1/3)
+
+    land_zones = [
+        {"id": 'crater', "radius": scale(3)},
+        {"id": 'thermal', "radius": scale(25)},
+        {"id": 'airblast', "radius": scale(60)},
+        {"id": 'ejecta', "radius": scale(120)},
+        {"id": 'seismic', "radius": scale(200)},
+    ]
+    water_zones = [
+        {"id": 'tsunami', "radius": scale(300)},
+        {"id": 'vapor_cloud', "radius": scale(80)},
+    ]
+    coastal_zones = [
+        {"id": 'mixed_wave', "radius": scale(150)},
+        {"id": 'shockwave', "radius": scale(40)},
+    ]
+
+    if terrain_type == 'land':
+        zones = land_zones
+    elif terrain_type == 'coastal':
+        zones = coastal_zones
+    else:
+        zones = water_zones
+
+    # 3. For each zone, get affected cities
+    all_cities = {}
+    for zone in zones:
+        resp = app.test_client().get(f"/api/cities?lat={lat}&lon={lon}&radius={zone['radius']}")
+        if resp.status_code == 200:
+            cities = resp.get_json()
+            for city in cities:
+                city_id = city['id']
+                dist = haversine_distance(lat, lon, city['latitude'], city['longitude'])
+                if city_id not in all_cities or dist < all_cities[city_id]['distance']:
+                    all_cities[city_id] = {
+                        'name': city['name'],
+                        'latitude': city['latitude'],
+                        'longitude': city['longitude'],
+                        'population': city['population'],
+                        'distance': dist,
+                        'zone': zone['id']
+                    }
+
+    # 4. Sort by evacuation priority: closest, then largest population
+    evac_list = list(all_cities.values())
+    evac_list.sort(key=lambda c: (c['distance'], -c['population']))
+    for i, city in enumerate(evac_list):
+        city['order'] = i + 1
+
+    # 5. Group by zone for output
+    zone_output = []
+    for zone in zones:
+        zone_cities = [c for c in evac_list if c['zone'] == zone['id']]
+        zone_output.append({
+            'id': zone['id'],
+            'radius': zone['radius'],
+            'cities': zone_cities
+        })
+
+    return jsonify({
+        'terrain': terrain_type,
+        'zones': zone_output,
+        'evacuation_order': evac_list
+    })
 # --------------------- Impact Route --------------------- #
 @app.route('/impact', methods=['GET'])
 def impact():
+    # Get parameters and log for debugging
     velocity = float(request.args.get('velocity'))
     mass = float(request.args.get('mass'))
     diameter = float(request.args.get('diameter'))
     angle = float(request.args.get('angle'))
     latitude = float(request.args.get('latitude'))
     longitude = float(request.args.get('longitude'))
+    print(f"[DEBUG] Received parameters: velocity={velocity}, mass={mass}, diameter={diameter}, angle={angle}, latitude={latitude}, longitude={longitude}")
 
-    (final_energy, final_velocity, final_mass, lost_energy, percent_lost) = simulate_meteor_atmospheric_entry(diameter, velocity, angle)
+    # Validate velocity range (expected: 10,000 to 70,000 m/s)
+    if velocity < 1000 or velocity > 100000:
+        return jsonify({
+            'error': 'The received velocity is unrealistic. Make sure it is in m/s (example: 40000 for 40 km/s).',
+            'velocity_received': velocity
+        }), 400
 
-    asteroid_density = (mass / ((4/3) * math.pi * (diameter/2)**3)) / 1000  # Convert to g/cm³
-    ground_density = get_density(latitude, longitude)  # g/cm³
+    # Calculate densities first
+    asteroid_density = mass / ((4/3) * math.pi * (diameter/2)**3)
+    ground_density_dict = get_density(latitude, longitude)
 
-    init_crater_diameter = ImpactCalculations.calculateInitialCraterDiameter(diameter, asteroid_density, velocity, ground_density['100-200cm'])
-    excavated_mass = ImpactCalculations.calculateExcavatedMass(init_crater_diameter, ground_density['100-200cm'])
+    # Get the last valid depth value (in kg/m³)
+    last_depth = max(ground_density_dict.keys(), key=lambda x: int(x.split('-')[0]))
+    ground_density = ground_density_dict[last_depth]
+
+    # Simulate atmospheric entry with correct density
+    final_energy, final_velocity, final_mass, lost_energy, percent_lost = simulate_meteor_atmospheric_entry(diameter, velocity, angle, asteroid_density)
+
+    # If the final velocity is very low, it disintegrates
+    if final_velocity < 1.0:
+        return jsonify({
+            'result': 'disintegrated',
+            'message': 'The meteorite disintegrated in the atmosphere and did not impact the ground.',
+            'final_velocity': final_velocity
+        })
+
+    # Impact calculations using final velocity after atmospheric entry
+    crater_velocity = final_velocity
+    init_crater_diameter = ImpactCalculations.calculateInitialCraterDiameter(diameter, asteroid_density, crater_velocity, ground_density)
+    excavated_mass = ImpactCalculations.calculateExcavatedMass(init_crater_diameter, ground_density)
     minimal_ejection_velocity = ImpactCalculations.calculateMinimalEjectionVelocity(init_crater_diameter)
     percent_to_space = ImpactCalculations.calculateMassToEscapeGravity(minimal_ejection_velocity, excavated_mass)
 
@@ -44,6 +160,9 @@ def impact():
         'lost_energy': lost_energy,
         'impact_energy_tnt': PropertiesCalculations.convertJoulesTNTTons(final_energy),
         'impact_energy_hiroshima': PropertiesCalculations.convertJoulesHiroshima(final_energy),
+        'final_velocity': final_velocity,
+        'crater_velocity_used': crater_velocity,
+        'velocity_warning': 'false'
     })
 
 @app.route('/mitigation', methods=['GET'])
@@ -299,6 +418,7 @@ def asteroid_details():
 
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
+
 
 # --------------------- Run Server --------------------- #
 if __name__ == '__main__':
