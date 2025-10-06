@@ -2,21 +2,38 @@ from calculations.Coords_Info import get_density
 from calculations.Energy_Atm import simulate_meteor_atmospheric_entry
 from calculations.Impact_Calculations import ImpactCalculations
 from calculations.Properties_Calculations import PropertiesCalculations
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import json, math, requests, os, numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
+import os
+import mimetypes
 
 # Load environment variables
 load_dotenv()
 
-app = Flask(__name__)
+mimetypes.add_type('application/javascript', '.js')
+mimetypes.add_type('text/css', '.css')
+
+app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)
+
 
 API_KEY = os.getenv('NASA_API_KEY')
 if not API_KEY:
     raise ValueError("NASA_API_KEY not found in environment variables. Please check your .env file.")
+
+@app.route('/static/<path:filename>')
+def serve_static_files(filename):
+    """Serve React's static files from the nested static/static directory"""
+    return send_from_directory(os.path.join(app.static_folder, 'static'), filename)
+
+@app.route('/three-textures/<path:filename>')
+def serve_textures(filename):
+    """Serve three.js textures"""
+    return send_from_directory(os.path.join(app.static_folder, 'three-textures'), filename)
+
 
 # --------------------- Impact Route --------------------- #
 @app.route('/impact', methods=['GET'])
@@ -46,10 +63,7 @@ def impact():
         'impact_energy_hiroshima': PropertiesCalculations.convertJoulesHiroshima(final_energy),
     })
 
-# --------------------- Home Route --------------------- #
-@app.route('/')
-def home():
-    return jsonify({"status": "OK", "message": "Welcome to the NASA Impact Visualizer API!"})
+
 
 # --------------------- NASA Asteroid Helpers --------------------- #
 def get_asteroid_data(asteroid_id, api_key=API_KEY):
@@ -282,7 +296,15 @@ def asteroid_details():
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    """Serve React app - catch all other routes"""
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, 'index.html')
+
 # --------------------- Run Server --------------------- #
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run()
      

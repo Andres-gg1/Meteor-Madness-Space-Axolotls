@@ -1,0 +1,19 @@
+{
+  "files": {
+    "main.css": "./static/css/main.bebfff86.css",
+    "main.js": "./static/js/main.f7e84995.js",
+    "static/js/453.cbd1b867.chunk.js": "./static/js/453.cbd1b867.chunk.js",
+    "static/media/meteorite-2.png": "./static/media/meteorite-2.09a928281ad75b0c953b.png",
+    "static/media/meteor-impact.jpeg": "./static/media/meteor-impact.fe7b99efb3a01d3406b3.jpeg",
+    "static/media/orbit-simulation.jpeg": "./static/media/orbit-simulation.4c91013f9137ddf17930.jpeg",
+    "static/media/axolotl.png": "./static/media/axolotl.f65c0b804b3c5f53fa81.png",
+    "index.html": "./index.html",
+    "main.bebfff86.css.map": "./static/css/main.bebfff86.css.map",
+    "main.f7e84995.js.map": "./static/js/main.f7e84995.js.map",
+    "453.cbd1b867.chunk.js.map": "./static/js/453.cbd1b867.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.bebfff86.css",
+    "static/js/main.f7e84995.js"
+  ]
+}
