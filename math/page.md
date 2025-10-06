@@ -4,35 +4,33 @@
 
 The kinetic energy of the asteroid is:
 
-<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
 
-Where Da, ρa, Va, ma are the diameter, density, velocity, and mass of the asteroid. This energy is what excavates, melts, vaporizes, and launches the ground material.
+Where $$D_a​$$, $$ρ_2​$$, $$V_2​$$, ρma are the diameter, density, velocity, and mass of the asteroid. This energy is what excavates, melts, vaporizes, and launches the ground material.
 
 The density of the ground is
 
 $$ρs​$$, and the energy transfer depends on the ratio:
 
-<figure><img src="../.gitbook/assets/image (1).png" alt="" width="64"><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1) (1).png" alt="" width="64"><figcaption></figcaption></figure>
 
 Through dimensional analysis, the asteroid's variables can be related to g, which affects the crater's size:
 
-<figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 This
 
-$$π2​$$ is known as a "pi-group".
+$$π_2​$$ is known as a "pi-group".
 
 The initial crater diameter, Dc, is calculated with an empirical law from experiments:
 
-$$Dc​=K1​(ρs​ρa​​)μπ2v​1​Da​$$
+<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
 
 The typical experimental constants for impacts against the Earth are
 
 $$K1​≈1,μ≈0.55,v≈0.17$$.
 
-Craters tend to collapse and obtain a final diameter
-
-$$Df​$$.
+Craters tend to collapse and obtain a final diameter $$Df​$$.
 
 $$Df​≈1.25Dc​$$
 

@@ -21,7 +21,7 @@ Describes the shape of the orbit, where $$r$$ is the distance to the Sun, $$a$$ 
 
 Calculates the averaged angular position ($$M$$) as a function of time, starting from an initial mean anomaly ($$M0​$$) at a given epoch, the mean motion ($$n$$), and the elapsed time ($$Δt$$).
 
-<figure><img src="../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 #### Kepler's Equation
 
