@@ -9,11 +9,12 @@
 ## Math
 
 * [Trajectory and Orbital Calculation](math/trajectory-and-orbital-calculation.md)
-* [Page](math/page.md)
+* [Meteor Impact Calculations](math/meteor-impact-calculations.md)
 
 ## Code
 
 * [Trajectory and Orbital Calculation](code/trajectory-and-orbital-calculation.md)
+* [Meteor Impact Calculations](code/meteor-impact-calculations.md)
 
 ## API Documentation
 
