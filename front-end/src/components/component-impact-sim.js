@@ -203,8 +203,6 @@ setLongitude(lon);
         energyTNTSpan.textContent = `${data.impact_energy_tnt.toFixed(4)} TNT tons`;
         const energyLossSpan = document.getElementById("energyLostValue");
         energyLossSpan.textContent = `${data.lost_energy.toFixed(4)} J`;
-        const percentToSpaceSpan = document.getElementById("massSpaceValue");
-        percentToSpaceSpan.textContent = `${data.percent_to_space.toFixed(2)}%`;
         const hiroshimaSpan = document.getElementById("hiroshimaValue");
         hiroshimaSpan.textContent = `${data.impact_energy_hiroshima.toFixed(3)} H-bombs`;
 
@@ -559,12 +557,10 @@ setLongitude(lon);
       const energyValue = document.getElementById("energyValue");
       const energyTNTValue = document.getElementById("energyTNTValue");
       const energyLostValue = document.getElementById("energyLostValue");
-      const massSpaceValue = document.getElementById("massSpaceValue");
       const hiroshimaValue = document.getElementById("hiroshimaValue");
       energyValue.textContent = "0 J";
       energyTNTValue.textContent = "0 TNT tons";
       energyLostValue.textContent = "0 J";
-      massSpaceValue.textContent = "0%";
       hiroshimaValue.textContent = "0 H-bombs";
   setLatitude(0);
   setLongitude(0);
@@ -668,7 +664,6 @@ setLongitude(lon);
       document.getElementById("energyValue").textContent = "0 J";
       document.getElementById("energyTNTValue").textContent = "0 TNT tons";
       document.getElementById("energyLostValue").textContent = "0 J";
-      document.getElementById("massSpaceValue").textContent = "0%";
       document.getElementById("hiroshimaValue").textContent = "0 H-bombs";
     } catch (e) {}
     setLatitude(0);
@@ -809,7 +804,6 @@ setLongitude(lon);
               <p>Energy: <span id="energyValue"></span></p>
               <p>Energy (TNT): <span id="energyTNTValue"></span></p>
               <p>Energy lost: <span id="energyLostValue"></span></p>
-              <p>Mass to space: <span id="massSpaceValue"></span></p>
               <p>Equivalent to: <span id="hiroshimaValue"></span></p>
             </div>
           </div>
@@ -861,7 +855,7 @@ setLongitude(lon);
             <div>Equivalent (H-bombs): <strong>{Number(mitigationInfo.fragmentation_energy_hiroshima).toExponential(2)}</strong></div>
           </div>
         ) : (
-          <div>Tip: Click the Earth to launch a meteor. Use the sliders to adjust diameter, velocity and mass.</div>
+          <div>Tip: Click the Earth to launch a meteor. Use the sliders to adjust diameter, velocity and mass (Might take a bit to generate the asteroid)</div>
         )}
       </div>
     </div>
