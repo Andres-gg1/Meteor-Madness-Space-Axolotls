@@ -9,7 +9,7 @@
 ## Math
 
 * [Trajectory and Orbital Calculation](math/trajectory-and-orbital-calculation.md)
-* [Physics of Asteroid Impacts and Crater Formation](math/physics-of-asteroid-impacts-and-crater-formation.md)
+* [Meteor Impact Calculations](math/physics-of-asteroid-impacts-and-crater-formation.md)
 
 ## Code
 
