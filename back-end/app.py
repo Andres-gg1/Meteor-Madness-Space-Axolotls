@@ -8,8 +8,6 @@ import json, math, requests, os, numpy as np
 from datetime import datetime
 from dotenv import load_dotenv
 
-
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
@@ -33,16 +31,14 @@ def evacuation_plan():
     except (TypeError, ValueError):
         return jsonify({'error': 'Missing or invalid energy_mt, latitude, or longitude'}), 400
 
-    # 1. Detect terrain type
     terrain = get_location_type(lat, lon)
     if terrain == 'water':
         terrain_type = 'ocean'
     elif terrain == 'land':
         terrain_type = 'land'
     else:
-        terrain_type = 'coastal'  # fallback, you can improve this logic
+        terrain_type = 'coastal'
 
-    # 2. Define zones by terrain
     def scale(radius):
         return radius * (energy_mt / 10) ** (1/3)
 
@@ -69,7 +65,6 @@ def evacuation_plan():
     else:
         zones = water_zones
 
-    # 3. For each zone, get affected cities
     all_cities = {}
     for zone in zones:
         resp = app.test_client().get(f"/api/cities?lat={lat}&lon={lon}&radius={zone['radius']}")
@@ -88,13 +83,11 @@ def evacuation_plan():
                         'zone': zone['id']
                     }
 
-    # 4. Sort by evacuation priority: closest, then largest population
     evac_list = list(all_cities.values())
     evac_list.sort(key=lambda c: (c['distance'], -c['population']))
     for i, city in enumerate(evac_list):
         city['order'] = i + 1
 
-    # 5. Group by zone for output
     zone_output = []
     for zone in zones:
         zone_cities = [c for c in evac_list if c['zone'] == zone['id']]
@@ -112,7 +105,6 @@ def evacuation_plan():
 # --------------------- Impact Route --------------------- #
 @app.route('/impact', methods=['GET'])
 def impact():
-    # Get parameters and log for debugging
     velocity = float(request.args.get('velocity'))
     mass = float(request.args.get('mass'))
     diameter = float(request.args.get('diameter'))
@@ -121,25 +113,20 @@ def impact():
     longitude = float(request.args.get('longitude'))
     print(f"[DEBUG] Received parameters: velocity={velocity}, mass={mass}, diameter={diameter}, angle={angle}, latitude={latitude}, longitude={longitude}")
 
-    # Validate velocity range (expected: 10,000 to 70,000 m/s)
     if velocity < 1000 or velocity > 100000:
         return jsonify({
             'error': 'The received velocity is unrealistic. Make sure it is in m/s (example: 40000 for 40 km/s).',
             'velocity_received': velocity
         }), 400
 
-    # Calculate densities first
     asteroid_density = mass / ((4/3) * math.pi * (diameter/2)**3)
     ground_density_dict = get_density(latitude, longitude)
 
-    # Get the last valid depth value (in kg/m³)
     last_depth = max(ground_density_dict.keys(), key=lambda x: int(x.split('-')[0]))
     ground_density = ground_density_dict[last_depth]
 
-    # Simulate atmospheric entry with correct density
     final_energy, final_velocity, final_mass, lost_energy, percent_lost = simulate_meteor_atmospheric_entry(diameter, velocity, angle, asteroid_density)
 
-    # If the final velocity is very low, it disintegrates
     if final_velocity < 1.0:
         return jsonify({
             'result': 'disintegrated',
@@ -147,7 +134,6 @@ def impact():
             'final_velocity': final_velocity
         })
 
-    # Impact calculations using final velocity after atmospheric entry
     crater_velocity = final_velocity
     init_crater_diameter = ImpactCalculations.calculateInitialCraterDiameter(diameter, asteroid_density, crater_velocity, ground_density)
     excavated_mass = ImpactCalculations.calculateExcavatedMass(init_crater_diameter, ground_density)
@@ -225,7 +211,6 @@ def get_orbital_data(asteroid_id, target_date_str):
     y_final_path = (x_rot2 * np.sin(omega) + y_rot2 * np.cos(omega)).tolist()
     z_final_path = z_rot2.tolist()
 
-    # Current position
     M0 = np.deg2rad(float(orbital_data['mean_anomaly']))
     n = np.deg2rad(float(orbital_data['mean_motion']))
     t0 = datetime.strptime(orbital_data['orbit_determination_date'], '%Y-%m-%d %H:%M:%S')
@@ -233,9 +218,8 @@ def get_orbital_data(asteroid_id, target_date_str):
     delta_t = (t - t0).total_seconds() / 86400.0
     M = M0 + n * delta_t
 
-    # Solve Kepler's equation iteratively
     E = M
-    for _ in range(20):  # más iteraciones
+    for _ in range(20): 
         E_next = M + e * np.sin(E)
         if abs(E_next - E) < 1e-6:
             break
