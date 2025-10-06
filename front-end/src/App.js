@@ -3,6 +3,7 @@ import Home from './pages/home';
 import WatchMeteorites from './pages/orbit-sim';
 import SimulateImpact from './pages/impact-sim';
 import ImpactMap from './components/ImpactMap.jsx';
+import ImpactDamage from './pages/impact-sim_2D.js'
 
 function App() {
   return (
@@ -18,4 +19,5 @@ function App() {
   );
 }
 
+export const URL = "http://127.0.0.1:5000";
 export default App;
