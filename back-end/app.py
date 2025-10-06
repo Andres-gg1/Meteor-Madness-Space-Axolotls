@@ -75,6 +75,23 @@ def impact():
         'velocity_warning': 'false'
     })
 
+@app.route('/mitigation', methods=['GET'])
+def mitigation():
+    velocity = float(request.args.get('velocity'))
+    mass = float(request.args.get('mass'))
+    diameter = float(request.args.get('diameter'))
+
+    kinetic_energy = PropertiesCalculations.calculateKineticEnergyByMass(mass, velocity)
+
+    safe_distance = PropertiesCalculations.aproximateSafeDistance(diameter)
+    fragmentation_energy = PropertiesCalculations.aproximateFragmentationEnergy(kinetic_energy)
+
+    return jsonify({
+        'safe_distance': safe_distance,
+        'fragmentation_energy': fragmentation_energy,
+        'fragmentation_energy_tnt': PropertiesCalculations.convertJoulesTNTTons(fragmentation_energy),
+        'fragmentation_energy_hiroshima': PropertiesCalculations.convertJoulesHiroshima(fragmentation_energy),
+    })
 
 # --------------------- Home Route --------------------- #
 @app.route('/')
