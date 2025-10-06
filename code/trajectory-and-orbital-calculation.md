@@ -76,11 +76,11 @@ def get_orbital_data(asteroid_id, target_date_str):
 
 First, the six standard Keplerian orbital elements are extracted from the API response. These elements define the shape and orientation of the orbit in space. The angular units are converted from degrees to radians for trigonometric calculations.
 
-* `e`: Eccentricity (![](data:,)) - Defines the shape of the ellipse.
-* `a`: Semi-major axis (![](data:,)) - Defines the size of the orbit.
-* `i`: Inclination (![](data:,)) - The angle of the orbit with respect to the reference plane (the ecliptic).
-* `w`: Argument of perihelion (![](data:,)) - The orientation of the ellipse in its orbital plane.
-* `omega`: Longitude of the ascending node (![](data:,)) - The point where the orbit crosses the reference plane from south to north.
+* `e`: Eccentricity ($$e$$) - Defines the shape of the ellipse.
+* `a`: Semi-major axis ($$a$$) - Defines the size of the orbit.
+* `i`: Inclination ($$i$$) - The angle of the orbit with respect to the reference plane (the ecliptic).
+* `w`: Argument of perihelion ($$ω$$) - The orientation of the ellipse in its orbital plane.
+* `omega`: Longitude of the ascending node ($$Ω$$) - The point where the orbit crosses the reference plane from south to north.
 
 Python
 
@@ -98,7 +98,7 @@ This block calculates 360 points along the orbit to be able to draw it. It is ba
 
 1.  Position in the Orbital Plane: The radial distance ($$r$$) is calculated for each point of the orbit using the true anomaly ($$ν$$) from 0 to 360 degrees. The 2D coordinates in the orbital plane (`x_orb_path`, `y_orb_path`) are derived from $$r$$ and $$ν$$.
 
-    Formula: $$r=a(1−e2)​/1+ecos(ν)$$
+    Formula: $$r=a(1−e^2)​/1+ecos(ν)$$
 2. Transformation to 3D Coordinates: The 2D coordinates are rotated and projected into the 3D reference coordinate system (ecliptic) by applying the rotations defined by the angles $$ω$$, $$i$$, and $$Ω$$.
 
 Python

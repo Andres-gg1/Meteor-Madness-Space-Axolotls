@@ -30,11 +30,11 @@ def impact():
 
     (final_energy, final_velocity, final_mass, lost_energy, percent_lost) = simulate_meteor_atmospheric_entry(diameter, velocity, angle)
 
-    asteroid_density = (mass / ((4/3) * math.pi * (diameter/2)**3)) / 1000  # g/cm³
+    asteroid_density = (mass / ((4/3) * math.pi * (diameter/2)**3)) / 1000  # Convert to g/cm³
     ground_density = get_density(latitude, longitude)  # g/cm³
 
-    init_crater_diameter = ImpactCalculations.calculateInitialCraterDiameter(diameter, asteroid_density, velocity, ground_density)
-    excavated_mass = ImpactCalculations.calculateExcavatedMass(init_crater_diameter, ground_density)
+    init_crater_diameter = ImpactCalculations.calculateInitialCraterDiameter(diameter, asteroid_density, velocity, ground_density['100-200cm'])
+    excavated_mass = ImpactCalculations.calculateExcavatedMass(init_crater_diameter, ground_density['100-200cm'])
     minimal_ejection_velocity = ImpactCalculations.calculateMinimalEjectionVelocity(init_crater_diameter)
     percent_to_space = ImpactCalculations.calculateMassToEscapeGravity(minimal_ejection_velocity, excavated_mass)
 

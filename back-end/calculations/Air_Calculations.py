@@ -15,7 +15,7 @@ def calculate_air_volume(diameter, distance):
 
 def calculate_air_mass(diameter, distance, density=1.007):
     volume = calculate_air_volume(diameter, distance)
-    mass = volume * density
+    mass = volume * density * 1000
     return mass
 
 def calculate_pressure_hpa(altitude_meters):

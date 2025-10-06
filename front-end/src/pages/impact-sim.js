@@ -1,7 +1,5 @@
 // src/pages/SimulateImpact.jsx
-import { Link } from 'react-router-dom';
 import Navbar from '../components/navbar';
-import { Meteors } from '../components/animations/meteors';
 import MeteorSimulation from '../components/component-impact-sim';
 
 function SimulateImpact() {

@@ -197,7 +197,7 @@ def get_density(lat, lon, radius_km=5, debug=False):
     
     if location_type == 'water':
         if debug: print(f"Location is over water (ocean, sea, lake, etc.)")
-        return {depth: None for depth in DEPTH_RANGES}
+        return {depth: 1 for depth in DEPTH_RANGES}  # No soil density for water
     
     elif location_type == 'antarctica':
         if debug: print(f"Location is in Antarctica")
@@ -244,6 +244,6 @@ if __name__ == '__main__':
     print(f"Coordinates: ({lat:.4f}, {lon:.4f})")
     try:
         density = get_density(lat, lon)
-        print(f"Density: {density}\n")
+        print(f"Density: {density['100-200cm']}\n")
     except Exception as e:
         print(f"Error processing coordinates ({lat}, {lon}): {e}\n")
